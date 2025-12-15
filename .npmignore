@@ -1,0 +1,26 @@
+# 忽略编译生成的文件（这些应该在发布前生成）
+index.html
+about.html
+
+# 忽略开发配置文件
+.env
+.env.*
+config.json
+
+# 忽略版本控制
+.git/
+.gitignore
+publish.ps1
+.npmrc
+
+# 忽略日志
+*.log
+logs/
+
+# 忽略IDE文件
+.idea/
+.vscode/
+
+# 忽略其它
+帮助.txt
+发布模板指南.md

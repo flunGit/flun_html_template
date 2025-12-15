@@ -1,0 +1,75 @@
+1.项目结构:
+		HTML模板继承实例/
+		├── templates/
+		│   ├── base.html     		 # 基础模板
+		│   ├── index.html    		 # 首页模板
+		│   └── about.html    		 # 关于页模板
+		├── services/         		 # 服务PAI
+		│   ├── db.js		  		 # MySQL数据库处理
+		│   └── templateService.js   # 脚本服务
+		├── static/           		 # 静态资源
+		│   ├── style.css			 # 样式文件
+		│   └── img/				 # 图片资源
+		│── package.json       		 # npm配置文件
+		├── dev-server.js     		 # 开发服务器脚本
+		└── compile.js         		 # 生产编译脚本
+
+
+2.初始化项目并安装依赖:
+		npm init -y
+		npm install express
+		npm install mysql2 express
+
+3.配置:(package.json脚本)
+	{
+	  "scripts": {
+		"dev": "node dev-server.js",
+		"build": "node compile.js"
+	  }
+	}
+
+4.开发环境使用说明:
+	1.启动开发服务器：
+		npm run dev
+	2.编译模板：
+		npm run build    或   node compile.js  #直接生成在根目录
+	3.访问页面：
+		首页：http://localhost:7296/index.html
+		关于页：http://localhost:7296/about.html
+		...
+	4.文件修改时：
+		服务器会自动检测模板文件变化
+		刷新浏览器即可看到更新
+
+5.数据库测试指令:(cmd)
+	# 1. 创建新设备记录 (必须提供整数)
+	curl -X POST http://localhost:7296/api/device-data ^
+	  -H "Content-Type: application/json" ^
+	  -d "{ \"person\": 100, \"rule\": 81 }"
+
+	# 2. 获取所有设备数据
+	curl -X GET http://localhost:7296/api/device-data
+
+	# 3. 根据ID获取单个设备
+	# 使用上一步创建的ID替换 {id}
+	curl -X GET http://localhost:7296/api/device-data/{id}
+
+	# 4. 更新设备记录 (全部字段)
+	Bash
+	curl -X PUT http://localhost:7296/api/device-data/{id} \
+	  -H "Content-Type: application/json" \
+	  -d '{
+	    "person": 10,
+	    "rule": 20
+	  }'
+
+	# 5. 部分更新设备记录 (只更新person字段)
+	Bash
+	curl -X PUT http://localhost:7296/api/device-data/{id} \
+	  -H "Content-Type: application/json" \
+	  -d '{
+	    "person": 1003
+	  }'
+
+	# 6. 删除设备记录
+	curl -X DELETE http://localhost:7296/api/device-data/{id}

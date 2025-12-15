@@ -1,0 +1,221 @@
+[extends base.html] <!-- 继承基础模板 -->
+
+[!keywords]"关键字测试"[~keywords]
+[!description]"测试网站"[~description]
+<!-- 这里故意不引入模板标签,是因为不引入代表默认继承 -->
+<!-- 只要引入就会替换基础模板对应标签内容 -->
+[!title]首页 - 模板功能测试[~title]
+
+[!style]
+<style>
+	/* 内容区主样式 */
+	.ind_content_main {
+		margin: 40px auto 0;
+		padding: 30px;
+		background: linear-gradient(to bottom, var(--content-bg-from), var(--content-bg-to));
+		border-radius: 10px;
+		max-width: 800px;
+		border: 1px solid var(--content-border);
+		box-shadow: 0 4px 15px var(--content-shadow);
+	}
+
+	.ind_content_main h2 {
+		margin-top: 0;
+	}
+
+	/* 模板测试样式 */
+	.template-test {
+		background: #e8f4f8;
+		padding: 20px;
+		border-radius: 8px;
+		margin: 20px 0;
+		border-left: 4px solid #2196F3;
+	}
+
+	.template-test h3 {
+		color: #2196F3;
+		margin-top: 0;
+	}
+
+	.test-result {
+		background: rgb(98, 154, 92);
+		padding: 10px;
+		border-radius: 4px;
+		margin: 10px 0;
+	}
+
+	/* 用户功能测试样式 */
+	.user-function-test {
+		background: #f0e8f8;
+		padding: 20px;
+		border-radius: 8px;
+		margin: 20px 0;
+		border-left: 4px solid #9C27B0;
+	}
+
+	.user-function-test h3 {
+		color: #9C27B0;
+		margin-top: 0;
+	}
+
+	/* 路由测试样式 */
+	.route-test {
+		background: #e8f8e8;
+		padding: 20px;
+		border-radius: 8px;
+		margin: 20px 0;
+		border-left: 4px solid #4CAF50;
+	}
+
+	.route-test h3 {
+		color: #4CAF50;
+		margin-top: 0;
+	}
+
+	.test-button {
+		background: #4CAF50;
+		color: white;
+		border: none;
+		padding: 10px 15px;
+		border-radius: 4px;
+		cursor: pointer;
+		margin: 5px;
+	}
+
+	.test-button:hover {
+		background: #45a049;
+	}
+
+	.api-result {
+		background: rgb(77, 106, 155);
+		padding: 10px;
+		border-radius: 4px;
+		margin: 10px 0;
+		border: 1px solid #ddd;
+		font-family: monospace;
+	}
+</style>
+[~style]
+
+[!header]<a href="about.html">跳转到关于我们</a>[~header]
+
+[!content]
+[!test]<h1>欢迎来到首页 - 模板功能测试</h1>[~test]
+<div class="ind_content_main">
+	<h2>主内容区</h2>
+	<p><a href="about.html">了解更多 →</a></p>
+</div>
+
+<!-- 模板功能测试区域 -->
+<div class="template-test">
+	<h3>模板功能测试</h3>
+
+	<div class="test-result">
+		<h4>1. 模板继承与区块替换测试</h4>
+		<p>状态: <span style="color: green;">✓ 成功</span></p>
+		<p>此页面通过 <code>"[extends base.html]"</code> 正确继承了基础模板</p>
+	</div>
+
+	<div class="test-result">
+		<h4>2. 变量替换测试</h4>
+		<p>当前路径: {{currentUrl}}</p>
+		<p>状态: <span style="color: green;">✓ 成功</span></p>
+	</div>
+</div>
+
+<!-- 用户自定义功能测试区域 -->
+<div class="user-function-test">
+	<h3>用户自定义功能测试</h3>
+
+	<div class="test-result">
+		<h4>1. 实用函数测试</h4>
+		<p>加法测试: 10 + 5 = {{user:index-utils.add(10, 5)}}</p>
+		<p>乘法测试: 7 × 3 = {{user:index-utils.multiply(7, 3)}}</p>
+		<p>格式化日期测试: {{user:index-utils.formatDate()}}</p>
+		<p>状态: <span style="color: green;">✓ 成功</span></p>
+	</div>
+
+	<div class="test-result">
+		<h4>2. 路由函数测试</h4>
+		<p>简单问候: {{user:index-utils.greet('访客')}}</p>
+		<p>带时间问候: {{user:index-utils.greetWithTime('用户')}}</p>
+		<p>年份变量加10: {{user:index-utils.add({{year}}, 10)}}</p>
+		<p>状态: <span style="color: green;">✓ 成功</span></p>
+	</div>
+</div>
+
+<!-- 路由功能测试区域 -->
+<div class="route-test">
+	<h3>用户自定义路由测试</h3>
+
+	<div class="test-result">
+		<h4>1. GET路由测试</h4>
+		<button class="test-button" type="button" onclick="testRoute('/api/greeting')">测试问候路由</button>
+		<button class="test-button" type="button" onclick="testRoute('/api/user/小明')">测试用户路由</button>
+		<div id="get-result" class="api-result">点击按钮测试路由...</div>
+	</div>
+
+	<div class="test-result">
+		<h4>2. POST路由测试</h4>
+		<button class="test-button" type="button" onclick="testPostRoute()">测试联系表单路由</button>
+		<div id="post-result" class="api-result">点击按钮测试POST路由...</div>
+	</div>
+</div>
+[~content]
+
+[!footer]
+© {{year}} 我的网站 | 首页 | 模板测试
+[~footer]
+
+
+<script> // 此标签添加的目的是方便代码高亮和逻辑检查,可以删除或保留,因为模板标签外内容会被忽略
+	[!script]
+	// 首页特定的模板测试脚本
+	console.log('首页模板测试完成');
+
+	// 用户功能测试脚本
+	console.log('用户功能测试:');
+	// 注意函数和变量标签结果非字符串的,在js中如果单独存在,需要使用反引号包裹,目的不被格式化并能高亮辨识
+	console.log('加法结果:', `{{user:index-utils.add(10, 5)}}`);
+	// 字符串型结果需引号包裹,并拼接引号,因为解析时会去掉外层引号,内部添加引号目的是保持高亮和不被解析为数学表达式
+	console.log('格式化日期:', '"' + '{{user:index-utils.formatDate()}}' + '"');
+	// 如果你习惯不高亮,可以直接这样写
+	console.log('格式化日期:', '{{user:index-utils.formatDate()}}');
+
+	// 路由测试函数
+	async function testRoute(url) {
+		try {
+			document.getElementById('get-result').innerHTML = '请求中...';
+			const response = await fetch(url), data = await response.json();
+			document.getElementById('get-result').innerHTML = JSON.stringify(data, null, 2);
+		} catch (error) {
+			document.getElementById('get-result').innerHTML = `错误: ${error.message}`;
+		}
+	}
+
+	async function testPostRoute() {
+		try {
+			document.getElementById('post-result').innerHTML = '请求中...';
+			const response = await fetch('/api/contact', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					name: '测试用户',
+					email: 'test@index.com',
+					message: '这是一个测试消息'
+				})
+			}), data = await response.json();
+			document.getElementById('post-result').innerHTML = JSON.stringify(data, null, 2);
+		} catch (error) {
+			document.getElementById('post-result').innerHTML = `错误: ${error.message}`;
+		}
+	}
+
+	// 页面加载时测试一个简单路由
+	window.addEventListener('load', () => {
+		testRoute('/api/greeting').catch(console.error);
+	});
+	[~script]
+</script>

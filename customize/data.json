@@ -1,0 +1,38 @@
+{
+  "topImg": {
+    "1492x874": {
+      "style": {
+        "left": "1397px",
+        "top": "805.5px",
+        "right": "auto",
+        "bottom": "auto"
+      }
+    },
+    "384x682": {
+      "style": {
+        "left": "321.722px",
+        "top": "602.178px",
+        "right": "auto",
+        "bottom": "auto"
+      }
+    }
+  },
+  "themeImg": {
+    "1492x874": {
+      "style": {
+        "left": "9px",
+        "top": "16.5px",
+        "right": "auto",
+        "bottom": "auto"
+      }
+    },
+    "384x682": {
+      "style": {
+        "left": "14.4px",
+        "top": "9.18329px",
+        "right": "auto",
+        "bottom": "auto"
+      }
+    }
+  }
+}

@@ -1,0 +1,59 @@
+{
+	"name": "lunjack-html-template",
+	"version": "3.0.9",
+	"description": "一个HTML模板工具包，提供开发服务器和模板编译功能，支持自定义标签和快捷输入,变量定义,包含文件引用，帮助开发者模块化处理HTML。",
+	"main": "index.js",
+	"types": "index.d.ts",
+	"scripts": {
+		"dev": "node dev-server.js",
+		"build": "node compile.js",
+		"postinstall": "node copy-files.js 2>&1 || echo \"复制文件失败\""
+	},
+	"files": [
+		"templates",
+		"services",
+		"static",
+		"customize",
+		"dev-server.js",
+		"dev.js",
+		"compile.js",
+		"build.js",
+		"restoreDefaults.js",
+		"index.js",
+		"index.d.ts",
+		"copy-files.js",
+		"README.md",
+		"CHANGELOG.md",
+		"LICENSE"
+	],
+	"keywords": [
+		"html",
+		"template",
+		"server",
+		"lunjack"
+	],
+	"author": {
+		"name": "lunjack",
+		"email": "china@lunjack.com",
+		"url": "http://www.lunjack.com"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/lunjack/HTML_Template.git"
+	},
+	"homepage": "https://www.npmjs.com/package/lunjack-html-template#readme",
+	"bugs": {
+		"url": "https://github.com/lunjack/HTML_Template/issues"
+	},
+	"license": "ISC",
+	"type": "commonjs",
+	"dependencies": {
+		"chokidar": "^4.0.3",
+		"express": "^5.1.0",
+		"mysql2": "^3.14.4",
+		"socket.io": "^4.8.1"
+	},
+	"devDependencies": {
+		"nodemon": "^3.1.10"
+	}
+}

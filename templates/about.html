@@ -1,0 +1,351 @@
+[extends base.html]<!-- 继承基础模板 -->
+
+[!title]关于我们 - 模板功能测试[~title]
+
+[!style]
+<style>
+	/* 内容区主样式 */
+	.abt_content_main {
+		display: flex;
+		gap: 20px;
+		margin-top: 30px;
+	}
+
+	/* 模板测试样式 */
+	.template-test {
+		background: #f8e8e8;
+		padding: 20px;
+		border-radius: 8px;
+		margin: 20px 0;
+		border-left: 4px solid #F44336;
+	}
+
+	.template-test h3 {
+		color: #F44336;
+		margin-top: 0;
+	}
+
+	.test-result {
+		background: rgb(145, 76, 76);
+		padding: 10px;
+		border-radius: 4px;
+		margin: 10px 0;
+	}
+
+	/* 条件判断和循环测试样式 */
+	.logic-test {
+		background: #fff8e8;
+		padding: 20px;
+		border-radius: 8px;
+		margin: 20px 0;
+		border-left: 4px solid #FF9800;
+	}
+
+	.logic-test h3 {
+		color: #FF9800;
+		margin-top: 0;
+	}
+
+	.product-list {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+		gap: 15px;
+		margin: 15px 0;
+	}
+
+	.product-card {
+		background: rgb(36, 119, 150);
+		padding: 15px;
+		border-radius: 5px;
+		box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+	}
+
+	.user-status {
+		padding: 10px;
+		margin: 10px 0;
+		border-radius: 5px;
+	}
+
+	.logged-in {
+		background: #5b3caa;
+		border-left: 4px solid #4CAF50;
+	}
+
+	.logged-out {
+		background: #ab4c4c;
+		border-left: 4px solid #F44336;
+	}
+
+	.team-list {
+		margin: 15px 0;
+	}
+
+	.team-member {
+		padding: 10px;
+		margin: 5px 0;
+		background: #425b72;
+		border-radius: 5px;
+		border-left: 4px solid #2196F3;
+	}
+
+	/* 复杂能测试样式 */
+	.new-feature-test {
+		background: #a6c46e;
+		padding: 20px;
+		border-radius: 8px;
+		margin: 20px 0;
+		border-left: 4px solid #2196F3;
+	}
+
+	.new-feature-test h3 {
+		color: #2196F3;
+		margin-top: 0;
+	}
+
+	.control-flow {
+		background: #432e96;
+		padding: 15px;
+		border-radius: 5px;
+		margin: 10px 0;
+		border-left: 4px solid #4CAF50;
+	}
+
+	.empty-state {
+		background: #b8965f;
+		padding: 15px;
+		border-radius: 5px;
+		margin: 10px 0;
+		border-left: 4px solid #FF9800;
+	}
+
+	hr {
+		border: none;
+		border-top: 2px solid #aa2c2c;
+		margin: 20px 0;
+	}
+</style>
+[~style]
+
+[!content]
+[!test]<h1>关于我们的公司 - 模板功能测试</h1>[~test]
+
+<div class="abt_content_main">
+	<h2>主内容区</h2>
+	<p><a href="index.html">← 返回首页</a></p>
+</div>
+
+<!-- 复杂功能测试区域 -->
+<div class="new-feature-test">
+	<h3>复杂功能测试</h3>
+
+	<div class="test-result">
+		<h4>1. 复杂条件表达式测试</h4>
+
+		<!-- 复杂条件表达式测试 - 使用 else if 语法 -->
+		<div class="control-flow">
+			<h5>用户权限测试</h5>
+			{{if user.isLoggedIn && user.membershipLevel === 'VIP'}}
+			<p style="color:green;">✓ 您是已登录的VIP用户</p>
+			{{else if user.isLoggedIn || user.isGuest}}
+			<p style="color:blue;">✓ 您是已登录用户或访客</p>
+			{{else}}
+			<p style="color:red;">✗ 您未登录</p>
+			{{endif}}
+			<hr>
+			<h5>产品状态测试</h5>
+			{{if product.stock > 0 && product.price < 100}}
+			<p style="color:green;">✓ 产品有库存且价格低于100元</p>
+			{{else if product.stock === 0 || product.price >= 100}}
+			<p style="color:orange;">⚠ 产品缺货或价格较高</p>
+			{{endif}}
+			<hr>
+			<h5>团队技能测试</h5>
+			{{if teamMembers.length > 2 && teamMembers[0].skills.includes('JavaScript')}}
+			<p style="color:green;">✓ 团队规模大于2人且第一个成员懂JavaScript</p>
+			{{endif}}
+		</div>
+	</div>
+
+	<div class="test-result">
+		<h4>2. 循环控制语句测试</h4>
+
+		<div class="control-flow">
+			<h5>Break 语句测试 (遇到价格超过250元的产品停止)</h5>
+			<div class="product-list">
+				{{for product in products}}
+				{{if product.price > 250}}
+				{{break}}
+				{{endif}}
+				<div class="product-card">
+					<h5>{{product.name}}</h5>
+					<p>价格: ¥{{product.price}}</p>
+					<p>库存: {{product.stock}}件</p>
+				</div>
+				{{endfor}}
+			</div>
+			<hr>
+			<h5>Continue 语句测试 (跳过缺货产品)</h5>
+			<div class="product-list">
+				{{for product in products}}
+				{{if product.stock === 0}}
+				{{continue}}
+				{{endif}}
+				<div class="product-card">
+					<h5>{{product.name}}</h5>
+					<p>价格: ¥{{product.price}}</p>
+					<p>库存: {{product.stock}}件</p>
+				</div>
+				{{endfor}}
+			</div>
+		</div>
+	</div>
+
+	<div class="test-result">
+		<h4>3. 空状态处理测试</h4>
+
+		<div class="empty-state">
+			<h5>非空数组测试</h5>
+			{{for product in products}}
+			<div class="product-card" style="margin: 10px;">
+				<h5>{{product.name}}</h5>
+				<p>价格: ¥{{product.price}}</p>
+			</div>
+			{{empty}}
+			<p style="color:red;">✗ 错误: 应该显示产品列表</p>
+			{{endfor}}
+			<hr>
+			<h5>空数组测试</h5>
+			{{for item in emptyArray}}
+			<div class="product-card">
+				<h5>{{item.name}}</h5>
+			</div>
+			{{empty}}
+			<p style="color:green;">✓ 正确: 空数组显示空状态消息</p>
+			<p>暂无数据，请稍后再试</p>
+			{{endfor}}
+			<hr>
+			<h5>空对象测试</h5>
+			{{for key, value in emptyObject}}
+			<p><strong>{{key}}:</strong> {{value}}</p>
+			{{empty}}
+			<p style="color:green;">✓ 正确: 空对象显示空状态消息</p>
+			<p>暂无相关信息</p>
+			{{endfor}}
+		</div>
+	</div>
+</div>
+
+<!-- 条件判断和循环测试区域 -->
+<div class="logic-test">
+	<h3>条件判断和循环功能测试</h3>
+
+	<div class="test-result">
+		<h4>1. 条件判断测试</h4>
+
+		<!-- 用户登录状态判断 -->
+		<h5>嵌套条件判断</h5>
+		{{if user.isLoggedIn}}
+		<div class="user-status logged-in">
+			<p>欢迎回来, {{user.name}}!</p>
+			<p>您的会员等级: {{user.membershipLevel}}</p>
+			{{if user.membershipLevel === 'VIP'}}
+			<p>🎉 您是VIP会员，享受专属特权!</p>
+			{{endif}}
+		</div>
+		{{else}}
+		<div class="user-status logged-out">
+			<p>您尚未登录，<a href="/login">请先登录</a></p>
+		</div>
+		{{endif}}
+		<hr>
+		<h5>简单条件判断</h5>
+		<!-- 库存状态判断 -->
+		{{if product.stock > 0}}
+		<p>库存状态: <span style="color:rgb(54, 185, 54);">有货 ({{product.stock}}件)</span></p>
+		{{else}}
+		<p>库存状态: <span style="color:red;">缺货</span></p>
+		{{endif}}
+	</div>
+
+	<div class="test-result">
+		<h4>2. 循环测试 - 产品列表</h4>
+
+		<div class="product-list">
+			{{for product in products}}
+			<div class="product-card">
+				<h5>{{product.name}}</h5>
+				<p>价格: ¥{{product.price}}</p>
+				<p>库存: {{product.stock}}件</p>
+				{{if product.isNew}}
+				<span style="color:rgb(118, 62, 103);font-weight:bold;">新品!</span>
+				{{endif}}
+			</div>
+			{{endfor}}
+		</div>
+	</div>
+
+	<div class="test-result">
+		<h4>3. 循环测试 - 团队成员</h4>
+
+		<div class="team-list">
+			{{for member in teamMembers}}
+			<div class="team-member">
+				<h5>{{member.name}} {{member_isFirst ? '(团队负责人)' : ''}}</h5>
+				<p>职位: {{member.position}}</p>
+				<p>部门: {{member.department}}</p>
+				{{if member.skills && member.skills.length > 0}}
+				<p>技能: {{member.skills.join(', ')}}</p>
+				{{endif}}
+			</div>
+			{{endfor}}
+		</div>
+	</div>
+
+	<div class="test-result">
+		<h4>4. 键值对循环测试</h4>
+
+		<div style="background: #b13c3c; padding: 10px; border-radius: 5px;">
+			{{for key, value in companyInfo}}
+			<p><strong>{{key}}:</strong> {{value}}</p>
+			{{endfor}}
+		</div>
+	</div>
+</div>
+
+<!-- 模板功能测试区域 -->
+<div class="template-test">
+	<h3>关于页模板功能测试</h3>
+
+	<div class="test-result">
+		<h4>1. 模板继承与样式测试</h4>
+		<p>状态: <span style="color: green;">✓ 成功</span></p>
+		<p>此页面通过 <code>"[extends base.html]"</code> 正确继承了基础模板</p>
+		<p>此页面已成功添加了自定义样式区块</p>
+	</div>
+</div>
+
+<!-- 包含文件测试 -->
+<div style="background: #53a853; padding: 15px; margin: 20px 0; border-radius: 5px;">
+	<h3>包含文件测试</h3>
+	<p>下面将尝试测试包含文件:</p>
+	[include test-include.html]
+	[include footer-content.html]
+</div>
+[~content]
+
+[!footer]
+© {{year}} 我的网站 | 关于我们 | 模板测试
+[~footer]
+
+
+<script> // 此标签添加的目的是方便代码高亮和逻辑检查,可以删除或保留,因为模板标签外内容会被忽略
+	[!script]
+	// 关于页特定的模板测试脚本
+	console.log('关于页模板测试完成');
+
+	// 添加动态内容
+	const testDiv = document.createElement('div');
+	testDiv.innerHTML = '<p style="color:green;font-weight:bold;">动态内容添加测试成功!</p>';
+	document.querySelector('.template-test').appendChild(testDiv);
+	[~script]
+</script>

@@ -1,0 +1,10 @@
+/* 主题图标样式 */
+#theme {
+    /* 绝对定位 */
+    position: fixed;
+    left: 20px;
+    top: 10px;
+    height: 40px;
+    z-index: 1000;
+    cursor: pointer;
+}

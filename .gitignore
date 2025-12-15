@@ -1,0 +1,4 @@
+.env
+*.key
+publish.ps1
+.npmrc

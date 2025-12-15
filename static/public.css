@@ -1,0 +1,333 @@
+/* ================================================================ *
+ * 全局元素样式
+ * ================================================================ */
+
+/* 全局元素重置：清除内外边距，设置盒模型 */
+* {
+	/* 清除所有内边距 */
+	padding: 0;
+	/* 清除所有外边距 */
+	margin: 0;
+	/* 设置盒模型为边框盒（border-box） */
+	box-sizing: border-box;
+	/* 移动端点击高亮透明 */
+	-webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+	/* 移动端禁用文本选择 */
+	-webkit-user-select: none;
+	/* IE/Edge禁用文本选择 */
+	-ms-user-select: none;
+	/* 标准属性禁用文本选择 */
+	user-select: none;
+}
+
+/* 页面主体样式 */
+body {
+	/* 回退背景色 */
+	background-color: var(--bg-color);
+	/* 渐变背景 */
+	background-image: var(--body-bg);
+	/* 基础字体大小 */
+	font-size: 15px;
+	/* 文字颜色 */
+	color: var(--text-color);
+	/* 字体族 */
+	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+	/* 最小高度为视口高度 */
+	min-height: 100vh;
+	/* 启用Flex布局 */
+	display: flex;
+	/* 垂直方向排列 */
+	flex-direction: column;
+	/* 背景和文字颜色切换过渡效果 */
+	transition: background 0.5s ease, color 0.5s ease;
+}
+
+/* Vue.js属性选择器 - 防止渲染阻塞 */
+[v-cloak] {
+	/* 在Vue实例挂载前隐藏元素 */
+	display: none;
+}
+
+/* 超链接通用样式 */
+a,
+a:hover,
+a:active {
+	/* 移除下划线 */
+	text-decoration: none;
+	/* 使用主题文字颜色 */
+	color: var(--text-color);
+}
+
+/* 粗体样式重置 */
+b {
+	/* 取消粗体效果 */
+	font-weight: normal;
+}
+
+/* 按钮基础样式 */
+button {
+	/* 鼠标指针为手形 */
+	cursor: pointer;
+	/* 移除边框 */
+	border: none;
+	/* 移除轮廓线 */
+	outline: none;
+}
+
+/* 斜体样式重置 */
+em,
+i {
+	/* 取消斜体效果 */
+	font-style: normal;
+}
+
+/* 表单元素基础样式 */
+input,
+textarea,
+select {
+	/* 移除轮廓线 */
+	outline: none;
+}
+
+/* 图片基础样式 */
+img {
+	/* 移除边框 */
+	border: none;
+	/* 垂直居中 */
+	vertical-align: middle;
+}
+
+/* 列表样式重置 */
+li,
+ol {
+	/* 移除列表标记 */
+	list-style: none;
+}
+
+/* ================================================================ *
+ * 页面布局组件样式
+ * ================================================================ */
+
+/* 头部区域样式 */
+header {
+	/* 相对定位 */
+	position: relative;
+	/* 顶部位置 */
+	top: 0px;
+	/* 左侧位置 */
+	left: 0px;
+	/* 全宽 */
+	width: 100%;
+	/* 固定高度 */
+	height: 40px;
+	/* 头部背景 */
+	background: var(--header-bg);
+	/* 文字颜色 */
+	color: white;
+	/* 内边距 */
+	padding: 8px;
+	/* 阴影效果 */
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* 头部链接样式（如主题切换按钮） */
+header a {
+	/* 头部文字颜色 */
+	color: var(--header-text);
+	/* 绝对定位 */
+	position: absolute;
+	/* 底部对齐 */
+	bottom: 0px;
+	/* 右侧20px */
+	right: 20px;
+	/* 文字居中 */
+	text-align: center;
+	/* 粗体 */
+	font-weight: bold;
+	/* 内边距 */
+	padding: 10px;
+	/* 圆角 */
+	border-radius: 4px;
+	/* 过渡效果 */
+	transition: all 0.3s ease;
+}
+
+/* 头部链接悬停效果 */
+header a:hover {
+	/* 半透明白色背景 */
+	background: rgba(255, 255, 255, 0.15);
+	/* 上移2px */
+	transform: translateY(-2px);
+}
+
+/* 主内容容器样式 */
+.container {
+	/* 最大宽度 */
+	max-width: 900px;
+	/* 上下边距40px，水平居中 */
+	margin: 40px auto;
+	/* 内边距 */
+	padding: 30px;
+	/* 容器背景色 */
+	background: var(--container-bg);
+	/* 圆角 */
+	border-radius: 12px;
+	/* 阴影效果 */
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+	/* 内容居中 */
+	text-align: center;
+}
+
+/* 页脚样式 */
+footer {
+	/* 页脚背景色 */
+	background: var(--footer-bg);
+	/* 文字颜色 */
+	color: white;
+	/* 文字居中 */
+	text-align: center;
+	/* 内边距 */
+	padding: 20px;
+	/* 顶部自动外边距（粘性页脚） */
+	margin-top: auto;
+	/* 字体大小 */
+	font-size: 0.9em;
+}
+
+/* ================================================================ *
+ * 内容元素样式
+ * ================================================================ */
+
+/* 一级标题样式 */
+h1 {
+	/* 标题颜色 */
+	color: var(--h1-color);
+	/* 下边框 */
+	border-bottom: 3px solid var(--h1-border);
+	/* 下内边距 */
+	padding-bottom: 12px;
+	/* 行内块元素 */
+	display: inline-block;
+	/* 外边距 */
+	margin: 0 auto 15px;
+	/* 字体大小 */
+	font-size: 2.2rem;
+	/* 字体粗细 */
+	font-weight: 700;
+}
+
+/* 二级标题样式 */
+h2 {
+	/* 标题颜色 */
+	color: var(--h2-color);
+	/* 下外边距 */
+	margin-bottom: 15px;
+	/* 字体大小 */
+	font-size: 1.8rem;
+}
+
+/* 段落样式 */
+p {
+	/* 段落颜色 */
+	color: var(--p-color);
+	/* 行高 */
+	line-height: 1.7;
+	/* 上下外边距 */
+	margin: 15px 0;
+	/* 字体大小 */
+	font-size: 1.1rem;
+}
+
+/* 无序列表容器样式 */
+ul {
+	/* 行内块元素 */
+	display: inline-block;
+	/* 内容左对齐 */
+	text-align: left;
+	/* 左内边距清零 */
+	padding-left: 0;
+	/* 上下外边距 */
+	margin: 20px 0;
+	/* 移除列表标记 */
+	list-style-type: none;
+}
+
+/* 列表项样式 */
+ul li {
+	/* 列表项背景 */
+	background: var(--li-bg);
+	/* 上下外边距 */
+	margin: 12px 0;
+	/* 内边距 */
+	padding: 15px 25px;
+	/* 圆角 */
+	border-radius: 6px;
+	/* 字体大小 */
+	font-size: 1.1rem;
+	/* 阴影效果 */
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+	/* 过渡效果 */
+	transition: all 0.3s ease;
+}
+
+/* 列表项悬停效果 */
+ul li:hover {
+	/* 悬停背景色 */
+	background: var(--li-hover);
+	/* 右移5px */
+	transform: translateX(5px);
+}
+
+/* 通用链接样式 */
+a {
+	/* 链接颜色 */
+	color: var(--link-color);
+	/* 过渡效果 */
+	transition: all 0.3s ease;
+}
+
+/* 链接悬停效果 */
+a:hover {
+	/* 悬停颜色 */
+	color: var(--link-hover);
+	/* 下划线 */
+	text-decoration: underline;
+}
+
+/* 按钮样式 */
+.btn {
+	/* 行内块元素 */
+	display: inline-block;
+	/* 按钮背景 */
+	background: var(--btn-bg);
+	/* 文字颜色 */
+	color: white;
+	/* 内边距 */
+	padding: 12px 28px;
+	/* 圆角 */
+	border-radius: 6px;
+	/* 移除下划线 */
+	text-decoration: none;
+	/* 上外边距 */
+	margin-top: 25px;
+	/* 字体粗细 */
+	font-weight: 600;
+	/* 字体大小 */
+	font-size: 1.05rem;
+	/* 阴影效果 */
+	box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+	/* 过渡效果 */
+	transition: all 0.3s ease;
+}
+
+/* 按钮悬停效果 */
+.btn:hover {
+	/* 悬停背景 */
+	background: var(--btn-hover);
+	/* 上移3px */
+	transform: translateY(-3px);
+	/* 增强阴影 */
+	box-shadow: 0 6px 12px rgba(52, 152, 219, 0.4);
+	/* 确保无下划线 */
+	text-decoration: none;
+}

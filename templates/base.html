@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<!--网站关键字-->
+	<meta name="keywords" content=[!keywords]""[~keywords] />
+	<!--网站描述-->
+	<meta name="description" content=[!description]""[~description] />
+	<!--页面定时跳转 值([秒],地址)-->
+	<meta http-equiv="refresh" content=[!refresh]""[~refresh] />
+	<!--标题栏显示图标-->
+	<link rel=" icon" type="image/x-icon" href=[!favicon]"./static/img/favicon.ico"[~favicon] />
+	<!--收藏栏显示图标-->
+	<link rel="shortcut icon" type="image/x-icon" href=[!shortcutIcon]"./static/img/favicon.ico"[~shortcutIcon] />
+	<!-- 网站标题 -->
+	<title>[!title][~title]</title>
+	<link rel="stylesheet" href="./static/constants.css" /> <!-- 样式常量 -->
+	<link rel="stylesheet" href="./static/public.css" /> <!-- 公共样式 -->
+	<link rel="stylesheet" href="./static/themeImg.css" /> <!-- 主题图标 -->
+	<link rel="stylesheet" href="./static/topImg.css" /> <!-- 返回顶部图标 -->
+	[!style]<!-- 样式区域 -->[~style]
+</head>
+
+<body>
+	<header>
+		[!header]<a href="index.html">← 返回首页</a>[~header]
+	</header>
+	<div class="container">
+		<!-- 默认内容区域 -->
+		[!content]
+		[!test][~test]<!-- 嵌套标签可以写,但会被忽略为普通标签,最终会被清理 -->
+		[~content]
+	</div>
+
+	<!-- 变量替换测试 -->
+	<div style="background: #459064; padding: 15px; margin: 20px 0; border-radius: 5px;">
+		<h3>模板功能测试 - 变量替换</h3>
+		<p>当前年份: {{year}}</p>
+		<p>时间戳: {{timestamp}}</p>
+		<p>基础URL: {{baseUrl}}</p>
+	</div>
+
+	<footer>
+		<!-- 脚本 -->
+		[!footer][~footer]
+	</footer>
+
+	<!-- 逻辑处理 -->
+	<script src="./static/themeModule.js"></script><!-- 引入主题自适应模块 -->
+	<script src="./static/mouseOrTouch.js"></script><!-- 引入鼠标或触摸操作 -->
+	<script src="./static/themeImg.js"></script>
+	<script src="./static/topImg.js"></script>
+	<script>
+		// 模板功能测试 - 添加一些测试数据
+		window.templateTestData = {
+			testTime: new Date().toLocaleString(),
+			pageName: document.title
+		};
+
+		[!script]
+		// 模板功能测试脚本
+		console.log('模板功能测试 - 页面加载完成:', window.templateTestData);
+		[~script]
+	</script>
+</body>
+
+</html>

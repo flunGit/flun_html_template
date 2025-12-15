@@ -1,0 +1,19 @@
+/* ======= 返回顶部样式 ======= */
+:root {
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.scroll-to-top {
+    position: fixed;
+    right: 20px;
+    bottom: calc(8px + var(--safe-area-bottom));
+    height: 50px;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s;
+    cursor: pointer;
+}
+
+.scroll-to-top.show {
+    opacity: 1;
+}
