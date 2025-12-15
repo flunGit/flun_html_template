@@ -1,4 +1,4 @@
-const { initProject } = require('lunjack-html-template');
+const { initProject } = require('flun-html-template');
 
 // 恢复文件
 initProject({

@@ -146,8 +146,8 @@ async function runCopyFiles(options = {}) {
 
         console.log('✅ 文件复制完成！');
         // 添加专业支持信息（总是显示）
-        console.log('\n✅ 专业支持:'), console.log('✅ • 开发文档: https://www.npmjs.com/package/lunjack-html-template');
-        console.log('✅ • 技术支持: china@lunjack.com');
+        console.log('\n✅ 专业支持:'), console.log('✅ • 开发文档: https://www.npmjs.com/package/flun-html-template');
+        console.log('✅ • 技术支持: cn@flun.top');
         console.log('✅ • 企业微信: https://work.weixin.qq.com/kfid/kfc44c370d4ddbac6f0'), console.log('✅ 安装完成！');
     } catch (error) {
         const errorMsg = `❌ 复制过程中发生错误: ${error.message}`;

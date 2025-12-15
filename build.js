@@ -1,3 +1,3 @@
-const { compile } = require('lunjack-html-template');
+const { compile } = require('flun-html-template');
 
 compile(); // 编译模板

@@ -54,15 +54,15 @@ graph TB
 npm init -y
 
 # 本地安装（推荐）
-npm i lunjack-html-template # 简写
+npm i flun-html-template # 简写
 # 或
 # 全局安装
-npm i -g lunjack-html-template # 简写
+npm i -g flun-html-template # 简写
 
 
-# lunjack其它npm家族安装包:
-npm i lunjack-env  # .env 文件的环境变量调用
-npm i lunjack-mail  # 邮件发送
+# flun其它npm家族安装包:
+npm i flun-env   # .env 文件的环境变量调用
+npm i flun-mail  # 邮件发送
 ```
 > **重要提示**：初次使用最好在空项目中执行安装，安装过程会自动安装示例和必要文件到根目录
 
@@ -111,7 +111,7 @@ node build.js
 - **环境变量**：`PORT=8080 node dev.js`
 - **编程方式**：
   ```javascript
-  const { startDevServer } = require('lunjack-html-template');
+  const { startDevServer } = require('flun-html-template');
   startDevServer(8080);
   ```
 
@@ -120,7 +120,7 @@ node build.js
 - **禁用**：`node dev.js --no-hot-reload`
 - **编程方式**：
 ```javascript
-  const { startDevServer } = require('lunjack-html-template');
+  const { startDevServer } = require('flun-html-template');
   startDevServer(8080,false);// 禁用热重载
 ```
 
@@ -159,16 +159,16 @@ HBuilder自定义代码块配置(HTML和js)：
 
 ### 更新版本
 ```bash
-npm update lunjack-html-template
+npm update flun-html-template
 ```
 
 ### 恢复初始文件
 ```bash
 # 基本命令（跳过已存在目录）
-node ./node_modules/lunjack-html-template/copy-files.js
+node ./node_modules/flun-html-template/copy-files.js
 
 # 常用选项：
-node ./node_modules/lunjack-html-template/copy-files.js --skip-files --verbose
+node ./node_modules/flun-html-template/copy-files.js --skip-files --verbose
 ```
 **可选参数**：
 - `--overwrite` - 覆盖已存在的文件和目录
@@ -181,7 +181,7 @@ node ./node_modules/lunjack-html-template/copy-files.js --skip-files --verbose
 ## 作为模块使用
 
 ```javascript
-const { startDevServer, compile, initProject } = require('lunjack-html-template');
+const { startDevServer, compile, initProject } = require('flun-html-template');
 
 // 启动开发服务器
 startDevServer();

@@ -1,1 +1,1 @@
-declare module 'lunjack-html-template';
+declare module 'flun-html-template';
