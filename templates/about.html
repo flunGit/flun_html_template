@@ -337,9 +337,8 @@
 © {{year}} 我的网站 | 关于我们 | 模板测试
 [~footer]
 
-
-<script> // 此标签添加的目的是方便代码高亮和逻辑检查,可以删除或保留,因为模板标签外内容会被忽略
-	[!script]
+[!script]
+<script>
 	// 关于页特定的模板测试脚本
 	console.log('关于页模板测试完成');
 
@@ -347,5 +346,5 @@
 	const testDiv = document.createElement('div');
 	testDiv.innerHTML = '<p style="color:green;font-weight:bold;">动态内容添加测试成功!</p>';
 	document.querySelector('.template-test').appendChild(testDiv);
-	[~script]
 </script>
+[~script]
