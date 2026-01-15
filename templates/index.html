@@ -129,17 +129,17 @@
 
 	<div class="test-result">
 		<h4>1. 实用函数测试</h4>
-		<p>加法测试: 10 + 5 = {{user:utils-fun.add(10, 5)}}</p>
-		<p>乘法测试: 7 × 3 = {{user:utils-fun.multiply(7, 3)}}</p>
-		<p>格式化日期测试: {{user:utils-fun.formatDate()}}</p>
+		<p>加法测试: 10 + 5 = {{user:functions.add(10, 5)}}</p>
+		<p>乘法测试: 7 × 3 = {{user:functions.multiply(7, 3)}}</p>
+		<p>格式化日期测试: {{user:functions.formatDate()}}</p>
 		<p>状态: <span style="color: green;">✓ 成功</span></p>
 	</div>
 
 	<div class="test-result">
 		<h4>2. 路由函数测试</h4>
-		<p>简单问候: {{user:utils-fun.greet('访客')}}</p>
-		<p>带时间问候: {{user:utils-fun.greetWithTime('用户')}}</p>
-		<p>年份变量加10: {{user:utils-fun.add({{year}}, 10)}}</p>
+		<p>简单问候: {{user:functions.greet('访客')}}</p>
+		<p>带时间问候: {{user:functions.greetWithTime('用户')}}</p>
+		<p>年份变量加10: {{user:functions.add({{year}}, 10)}}</p>
 		<p>状态: <span style="color: green;">✓ 成功</span></p>
 	</div>
 </div>
@@ -175,11 +175,11 @@
 	// 用户功能测试脚本
 	console.log('用户功能测试:');
 	// 注意函数和变量标签结果非字符串的,在js中如果单独存在,需要使用反引号包裹,目的不被格式化并能高亮辨识
-	console.log('加法结果:', `{{user:utils-fun.add(10, 5)}}`);
+	console.log('加法结果:', `{{user:functions.add(10, 5)}}`);
 	// 字符串型结果需引号包裹,并拼接引号,因为解析时会去掉外层引号,内部添加引号目的是保持高亮和不被解析为数学表达式
-	console.log('格式化日期:', '"' + '{{user:utils-fun.formatDate()}}' + '"');
+	console.log('格式化日期:', '"' + '{{user:functions.formatDate()}}' + '"');
 	// 如果你习惯不高亮,可以直接这样写
-	console.log('格式化日期:', '{{user:utils-fun.formatDate()}}');
+	console.log('格式化日期:', '{{user:functions.formatDate()}}');
 
 	// 路由测试函数
 	async function testRoute(url) {
