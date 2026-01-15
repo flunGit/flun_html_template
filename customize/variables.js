@@ -1,6 +1,13 @@
-// customize/about-data.js
+// customize/variables.js
 module.exports = {
     variables: {
+        // ============= 基础信息变量 ============
+        year: new Date().getFullYear(),
+        timestamp: Date.now(),                          // 当前时间戳
+        baseUrl: '/',
+        nodeEnv: process.env.NODE_ENV || 'development', // 当前环境
+        serverTime: new Date().toLocaleString(),        // 服务器当前时间
+        // ============ 自定义数据变量 ============
         // 用户信息
         user: {
             isLoggedIn: true,
