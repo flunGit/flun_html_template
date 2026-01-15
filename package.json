@@ -1,6 +1,6 @@
 {
 	"name": "flun-html-template",
-	"version": "3.0.13",
+	"version": "3.0.14",
 	"description": "一个HTML模板工具包，提供开发服务器和模板编译功能，支持自定义标签和快捷输入,变量定义,包含文件引用，帮助开发者模块化处理HTML。",
 	"main": "index.js",
 	"types": "index.d.ts",
