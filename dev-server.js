@@ -5,7 +5,7 @@
  * 1. 依赖导入与服务器初始化
  * 2. 服务器配置与端口管理(parseAndValidatePort,parseServerConfig)
  * 3. 全局CORS中间件和静态资源配置(/static路径)
- * 4. 服务器生命周期管理(requiresUrlEncoding, printAvailablePages, startServer)
+ * 4. 服务器生命周期管理(printAvailablePages, startServer)
  * 5. 请求页面路由处理(自动路由与模板渲染)
  * 6. 热重载功能实现(文件监听与WebSocket通信)
  * 7. 导出接口与启动执行(module.exports , startServer)
@@ -21,11 +21,42 @@ const socketIo = require('socket.io');
 const chokidar = require('chokidar');
 const {
 	getAvailableTemplates, findEntryFile, validateTemplateFile, renderTemplate, processIncludes, processVariables,
-	loadUserFeatures, templatesDir, staticDir, defaultPort
+	loadUserFeatures, templatesAbsDir, staticDir, customizeDir, defaultPort
 } = require('./services/templateService');
 
-const app = express();
+const app = express(), staticAbsDir = path.join(process.cwd(), staticDir),
+	customizeAbsDir = path.join(process.cwd(), customizeDir);
 let server, io, watcher, cachedPages = [];// 缓存模板列表
+
+// ==================== 工具函数 ====================
+/**
+ * 创建带WebSocket的服务器
+ */
+function createServerWithSocket(app, config) {
+	server = http.createServer(app);
+	if (config.hotReload) {
+		io = socketIo(server);
+		io.engine.on("headers", headers => headers["Content-Type"] = "text/html; charset=utf-8");
+	}
+}
+
+/**
+ * 清理资源
+ */
+function cleanupResources() {
+	if (watcher) watcher.close(), watcher = null;
+	if (io) io.close(), io = null;
+}
+
+/**
+ * 生成页面URL
+ */
+function generateUrls(page, port) {
+	const baseUrl = `http://localhost:${port}`, url = `${baseUrl}/${page}`,
+		needsEncoding = !/^[a-zA-Z0-9\-_.~]+$/.test(page); // 检查是否包含需要编码的字符
+
+	return { url, encodedUrl: `${baseUrl}/${encodeURI(page)}`, needsEncoding };
+}
 
 // ==================== 2.服务器配置与端口管理 ====================
 /**
@@ -99,36 +130,24 @@ app.use((req, res, next) => {
 
 	next();
 });
-app.use('/static', express.static(path.join(process.cwd(), staticDir)));
+app.use('/static', express.static(staticAbsDir));
 
 // ==================== 4.服务器生命周期管理 ====================
-/**
- * 检测文件名是否需要URL编码
- * @param {string} filename - 待检测的文件名
- * @returns {boolean} - 包含特殊字符时返回true
- */
-function requiresUrlEncoding(filename) {
-	const safeChars = /^[a-zA-Z0-9\-_.~]+$/;
-	return !safeChars.test(filename);
-}
-
 /**
  * 控制台输出可访问页面信息
  * @param {string[]} pages - 有效的模板文件名集合
  * @param {number} port - 服务器端口号
- * @param {boolean} hotReloadEnabled - 是否启用热重载
+ * @param {boolean} hotReload - 是否启用热重载
  */
-function printAvailablePages(pages, port, hotReloadEnabled) {
-	console.log('开发服务器启动成功!'), console.log(`访问地址: http://localhost:${port}`);
+function printAvailablePages(pages, port, hotReload) {
+	console.log(`开发服务器启动成功!\n访问地址: http://localhost:${port}`);
+	if (hotReload) console.log(`✅ 热重载功能已启用(监听目录->${templatesAbsDir},${staticDir},${customizeDir})`);
 
-	if (hotReloadEnabled) console.log('✅ 热重载功能已启用 - 文件修改时将自动刷新浏览器');
 	console.log('\n可访问页面:');
-
 	pages.sort().forEach(page => {
-		const url = `http://localhost:${port}/${page}`, encodedUrl = `http://localhost:${port}/${encodeURI(page)}`,
-			needsEncoding = requiresUrlEncoding(page);
+		const { url, encodedUrl, needsEncoding } = generateUrls(page, port);
 
-		if (needsEncoding) console.log(`  原始路径: ${url} (需复制访问)`), console.log(`  编码路径: ${encodedUrl} (直接访问)`);
+		if (needsEncoding) console.log(`  原始路径: ${url} (需复制访问)\n  编码路径: ${encodedUrl} (直接访问)`);
 		else console.log(`  直接访问: ${url}`);
 	});
 
@@ -151,12 +170,7 @@ const startServer = async (port, hotReload) => {
 
 		if (config.hotReload) setupHotReload(); // 设置热重载
 		printAvailablePages(cachedPages, config.port, config.hotReload);
-
-		server = http.createServer(app); 			 // 创建服务器
-		if (config.hotReload) {
-			io = socketIo(server);
-			io.engine.on("headers", (headers) => headers["Content-Type"] = "text/html; charset=utf-8");
-		}
+		createServerWithSocket(app, config);   // 创建服务器和WebSocket
 
 		server.listen(config.port, () => {
 			console.log(`服务器运行中，按 Ctrl+C 退出`), console.log('-----------------------------------');
@@ -199,7 +213,6 @@ app.use(async (req, res, next) => {
 		next();
 	} catch (error) {
 		console.error(`处理请求时出错: ${error.message}`), console.error(error.stack);
-		if (!res.headersSent) res.status(500).send('服务器处理请求时发生错误');
 	}
 });
 
@@ -216,48 +229,98 @@ function injectHotReloadScript(html) {
     	<script>
     	  (function() {
     	    var socket = io();
-    	    socket.on('hot-reload', function() {
-    	      console.log('[热重载] 检测到文件更改，重新加载页面...');
-    	      setTimeout(function() {
-    	        window.location.reload();
-    	      }, 100);
+    	    // 监听热重载事件
+    	    socket.on('hot-reload', (delay) => {
+    	      console.log('[热重载] 检测到文件更改,' + delay + '毫秒后重新加载页面...');
+    	      setTimeout(() => window.location.reload(), delay);
     	    });
     	  })();
     	</script>
    `;
 
-	if (html.includes('</body>')) return html.replace('</body>', `${socketScript}</body>`); // 将脚本注入到body结束标签之前
-	return html + socketScript; 															// 如果没有body标签，直接追加到末尾
+	if (html.includes('</body>')) return html.replace('</body>', `${socketScript}</body>`);
+	return html + socketScript;
 }
 
 /**
  * 设置文件监听和热重载功能
  */
 function setupHotReload() {
-	// 监听模板目录和静态文件目录
-	const watchDirs = [templatesDir, path.join(process.cwd(), staticDir)].filter(dir => {
-		try {
-			return fsSync.existsSync(dir);
-		} catch {
-			return false;
+	// 监听模板目录、静态文件目录和后端目录
+	const watchDirs = [templatesAbsDir, staticAbsDir, customizeAbsDir].filter(dir => fsSync.existsSync(dir));
+	if (watchDirs.length === 0) return console.warn('[热重载] 没有可监听的目录');
+
+	// 文件变更事件处理函数
+	const handleFileEvent = (event, filePath) => {
+		const isBackendFile = filePath.startsWith(customizeAbsDir);
+		console.log(`检测到${event}了${path.relative(process.cwd(), filePath)}文件
+			\n热重载->${isBackendFile ? '后端文件变化重启更新中...' : '前端文件变化已刷新页面'}`);
+
+		// 判断是前端文件还是后端文件
+		if (isBackendFile) {
+			io.emit('hot-reload', 3500);   			// 通知浏览器延迟刷新
+			setTimeout(() => restartServer(), 500); // 延迟后重启服务器
 		}
-	}),	// 文件变更事件处理函数
-		handleFileEvent = (event, filePath) => {
-			console.log(`[热重载] 检测到文件${event}: ${path.relative(process.cwd(), filePath)}`);
-			if (io) io.emit('hot-reload'); // 通知所有连接的客户端刷新页面
-		};
-	watcher = chokidar.watch(watchDirs, { ignored: /(^|[\/\\])\../, persistent: true, ignoreInitial: true }); // 忽略隐藏文件
+		else {
+			// 如果删除了HTML模板文件,从缓存中移除
+			if (event === '删除' && filePath.startsWith(templatesAbsDir) && filePath.endsWith('.html')) {
+				const templateName = path.relative(templatesAbsDir, filePath).replace(/\\/g, '/');
+				cachedPages = cachedPages.filter(page => page !== templateName);
+			}
+			io.emit('hot-reload', 100);   // 通知浏览器刷新
+		}
+	};
+
+	// 设置监听器(忽略隐藏文件)
+	watcher = chokidar.watch(watchDirs, {
+		ignored: /(^|[\/\\])\../, persistent: true, ignoreInitial: true
+	});
+
 	watcher.on('change', (filePath) => handleFileEvent('更改', filePath))
 		.on('add', (filePath) => handleFileEvent('添加', filePath))
+		.on('unlink', (filePath) => handleFileEvent('删除', filePath))
 		.on('error', (error) => console.error('[热重载] 文件监听错误:', error));
+}
+
+/**
+ * 重启服务器
+ */
+async function restartServer() {
+	try {
+		const port = server.address().port; // 保存当前端口
+		cleanupResources(); 			    // 关闭现有资源
+
+		if (server) {
+			server.close(async () => {
+				try {
+					// 清除自定义模块的缓存
+					Object.keys(require.cache).forEach(key => {
+						if (key.includes(customizeDir)) delete require.cache[key];
+					});
+
+					// 重新加载用户功能模块和获取模板列表
+					await loadUserFeatures(app, true), cachedPages = await getAvailableTemplates();
+
+					// 重新启动服务器
+					const config = { port, hotReload: true };
+					createServerWithSocket(app, config);
+
+					server.listen(config.port, () => setupHotReload()); // 重新设置热重载
+				} catch (error) {
+					console.error('[热重载] 服务器重启失败:', error);
+				}
+			});
+		}
+	} catch (error) {
+		console.error('[热重载] 重启过程中发生错误:', error);
+	}
 }
 
 // ==================== 7.导出接口与启动执行 ====================
 module.exports = {
 	startServer, closeServer: () => {
-		if (watcher) watcher.close();
+		cleanupResources();
 		if (server) server.close();
 	}
 };
-
 if (require.main === module) startServer().catch(error => (console.error('服务器启动失败:', error), process.exit(1)));

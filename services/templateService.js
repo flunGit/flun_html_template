@@ -19,7 +19,7 @@ const vm = require('vm');
 // 原始化变量
 // ==================== 1. 常量声明及工具函数====================
 // 统一所有路径常量，其他文件从此导入
-const templatesDir = path.join(process.cwd(), 'templates'),
+const templatesAbsDir = path.join(process.cwd(), 'templates'),
 	staticDir = 'static', customizeDir = 'customize', defaultPort = 7296,
 	// 预编译所有高频正则表达式
 	includeRegex = /(\"|')\[include\s+([^\]]+)\](\"|')|\[include\s+([\S\s]+?)\]/gi, quotedVarRegex = /`\s*{{(.*?)}}\s*`/g,
@@ -95,7 +95,7 @@ function _safeToString(value) {
 async function findEntryFile(cachedPages) {
 	// 查找显式标记
 	for (const file of cachedPages) {
-		const content = await fsPromises.readFile(path.join(templatesDir, file), 'utf8');
+		const content = await fsPromises.readFile(path.join(templatesAbsDir, file), 'utf8');
 		if (content.includes('<!-- @entry -->')) return file;
 	}
 
@@ -191,19 +191,19 @@ async function processIncludes(content, currentFile = '', inclusionStack = new S
 		parts.push(content.slice(index + fullMatch.length, lastIndex)), lastIndex = index; // 添加当前匹配后的内容片段
 
 		let includePath;
-		if (path.isAbsolute(fileName)) includePath = path.join(templatesDir, fileName);
+		if (path.isAbsolute(fileName)) includePath = path.join(templatesAbsDir, fileName);
 		else {
-			const currentDir = currentFile ? path.dirname(path.join(templatesDir, currentFile)) : templatesDir;
+			const currentDir = currentFile ? path.dirname(path.join(templatesAbsDir, currentFile)) : templatesAbsDir;
 			includePath = path.resolve(currentDir, fileName);
 		}
 
 		// 确保路径安全
-		if (!_isSafePath(includePath, templatesDir)) {
+		if (!_isSafePath(includePath, templatesAbsDir)) {
 			console.warn(`⛔ 包含路径不安全，已跳过: ${fileName}`), parts.push('');
 			continue;
 		}
 
-		const relativeIncludePath = path.relative(templatesDir, includePath); // 获取相对于模板目录的路径用于记录
+		const relativeIncludePath = path.relative(templatesAbsDir, includePath); // 获取相对于模板目录的路径用于记录
 		// 检查循环包含
 		if (inclusionStack.has(includePath)) {
 			console.warn(`⚠️ 循环包含跳过: ${fileName}`), parts.push('');
@@ -773,12 +773,12 @@ async function getAvailableTemplates() {
 				const fullPath = path.join(dir, item), stat = await fsPromises.stat(fullPath);
 				if (stat.isDirectory()) results.push(...(await getAllHtmlFiles(fullPath)));
 				else if (item !== 'base.html' && path.extname(item).toLowerCase() === '.html') {
-					const relativePath = path.relative(templatesDir, fullPath);
+					const relativePath = path.relative(templatesAbsDir, fullPath);
 					results.push(relativePath.replaceAll('\\', '/'));
 				}
 			}
 			return results;
-		}, templates = await getAllHtmlFiles(templatesDir);
+		}, templates = await getAllHtmlFiles(templatesAbsDir);
 		if (templates.length === 0) throw new Error('未找到任何可用模板文件，请检查模板目录');
 
 		return templates;
@@ -833,7 +833,7 @@ function _renderTemplateContent(baseContent, templateContent) {
  * @throws {Error} 校验失败时抛出异常
  */
 async function validateTemplateFile(fileName, isDev = false) {
-	const filePath = path.join(templatesDir, fileName), content = await fsPromises.readFile(filePath, 'utf8'),
+	const filePath = path.join(templatesAbsDir, fileName), content = await fsPromises.readFile(filePath, 'utf8'),
 		errors = _validateTemplateStructure(content);
 
 	if (errors.length > 0) {
@@ -855,14 +855,14 @@ async function validateTemplateFile(fileName, isDev = false) {
  * 4. 返回合成后的模板
  */
 async function renderTemplate(templateFile) {
-	const templatePath = path.join(templatesDir, templateFile),
+	const templatePath = path.join(templatesAbsDir, templateFile),
 		templateContent = await fsPromises.readFile(templatePath, 'utf8'), // 读取模板内容
 		extendsMatch = templateContent.match(_resetRegex(extendsRegex));   // 匹配[extends]指令
 
 	if (!extendsMatch) return _renderTemplateContent(templateContent, '');
 	const remainingContent = templateContent.slice(extendsMatch[0].length), // 移除整行（包括指令和注释）
 		baseTemplateFile = extendsMatch[1].trim(), basePath = path.isAbsolute(baseTemplateFile)
-			? path.join(templatesDir, baseTemplateFile) : path.join(path.dirname(templatePath), baseTemplateFile);
+			? path.join(templatesAbsDir, baseTemplateFile) : path.join(path.dirname(templatePath), baseTemplateFile);
 
 	// 检查基模板是否存在
 	try {
@@ -877,7 +877,7 @@ async function renderTemplate(templateFile) {
 
 // ==================== 9. 模块功能导出 ====================
 module.exports = {
-	templatesDir, staticDir, customizeDir, defaultPort,    // 路径常量
+	templatesAbsDir, staticDir, customizeDir, defaultPort,    // 路径常量
 	getAvailableTemplates, findEntryFile,				   // 模板文件操作
 	validateTemplateFile, renderTemplate,				   // 模板渲染引擎核心
 	processIncludes, setCompilationMode, getIncludedFiles, // 包含文件处理
