@@ -16,10 +16,9 @@ const fs = require('fs');
 const path = require('path');
 const fsPromises = fs.promises;
 const vm = require('vm');
-// 原始化变量
 // ==================== 1. 常量声明及工具函数====================
 // 统一所有路径常量，其他文件从此导入
-const templatesAbsDir = path.join(process.cwd(), 'templates'),
+const CWD = process.cwd(), pRes = path.resolve, templatesAbsDir = path.join(CWD, 'templates'),
 	staticDir = 'static', customizeDir = 'customize', defaultPort = 7296,
 	// 预编译所有高频正则表达式
 	includeRegex = /(\"|')\[include\s+([^\]]+)\](\"|')|\[include\s+([\S\s]+?)\]/gi, quotedVarRegex = /`\s*{{(.*?)}}\s*`/g,
@@ -52,8 +51,8 @@ function _resetRegex(regex) {
  * @returns {boolean} 路径是否安全
  */
 function _isSafePath(requestedPath, baseDir) {
-	const resolvedPath = path.resolve(requestedPath);
-	return resolvedPath.startsWith(path.resolve(baseDir));
+	const resolvedPath = pRes(requestedPath);
+	return resolvedPath.startsWith(pRes(baseDir));
 }
 
 /**
@@ -194,7 +193,7 @@ async function processIncludes(content, currentFile = '', inclusionStack = new S
 		if (path.isAbsolute(fileName)) includePath = path.join(templatesAbsDir, fileName);
 		else {
 			const currentDir = currentFile ? path.dirname(path.join(templatesAbsDir, currentFile)) : templatesAbsDir;
-			includePath = path.resolve(currentDir, fileName);
+			includePath = pRes(currentDir, fileName);
 		}
 
 		// 确保路径安全
@@ -233,11 +232,42 @@ async function processIncludes(content, currentFile = '', inclusionStack = new S
 
 // ==================== 4. 用户自定义功能系统 ====================
 const userFeatures = {};
+let writtenFilesToIgnore = new Set();
 
 /**
- * 安全加载模块（带异常处理）
- * @param {string} modulePath - 模块路径
- * @returns {Object|null} 加载的模块对象或null
+ * 运行时监控所有文件写入操作
+ */
+function monitorFileWrites() {
+	const sync = fs.writeFileSync, async = fs.writeFile, promise = fsPromises.writeFile, normalize = path.normalize,
+
+		// 内联逻辑
+		track = path => {
+			if (typeof path === 'string') writtenFilesToIgnore.add(normalize(pRes(CWD, path)));
+		};
+
+	fs.writeFileSync = function (file, ...args) {
+		const r = sync.call(this, file, ...args);
+		process.nextTick(track, file);
+		return r;
+	};
+
+	fs.writeFile = function (file, ...args) {
+		const r = async.call(this, file, ...args);
+		process.nextTick(track, file);
+		return r;
+	};
+
+	fsPromises.writeFile = function (file, ...args) {
+		const r = promise.call(this, file, ...args);
+		process.nextTick(track, file);
+		return r;
+	};
+
+	return () => { fs.writeFileSync = sync, fs.writeFile = async, fsPromises.writeFile = promise; };
+}
+
+/**
+ * 安全加载模块
  */
 function _safeRequire(modulePath) {
 	try {
@@ -255,7 +285,7 @@ function _safeRequire(modulePath) {
  * @returns {Promise<Object>} 用户功能集合
  */
 async function loadUserFeatures(app = null, isCompileMode = false) {
-	const featuresDir = path.join(process.cwd(), customizeDir);
+	const featuresDir = path.join(CWD, customizeDir);
 
 	// 检查并创建目录（如果是编译模式）
 	try {
@@ -266,6 +296,8 @@ async function loadUserFeatures(app = null, isCompileMode = false) {
 	}
 
 	userFeatures.variables = {}, userFeatures.functions = {};
+	writtenFilesToIgnore.clear(); // 清除之前的记录
+
 	try {
 		const files = await fsPromises.readdir(featuresDir), jsFiles = files.filter(file => file.endsWith('.js'));
 		console.log(`🔧 正在加载 (${jsFiles.length}个用户自定义功能文件):`);
@@ -295,8 +327,6 @@ async function loadUserFeatures(app = null, isCompileMode = false) {
 	return userFeatures;
 }
 
-
-
 /**
  * 执行用户自定义函数
  * @param {string} funcName - 函数名称
@@ -312,7 +342,6 @@ function _executeUserFunction(funcName, ...args) {
 		return null;
 	}
 }
-
 // ==================== 5. 变量处理系统 ====================
 /**
  * 检查模板内容中是否还有未处理的标签
@@ -877,10 +906,10 @@ async function renderTemplate(templateFile) {
 
 // ==================== 9. 模块功能导出 ====================
 module.exports = {
-	templatesAbsDir, staticDir, customizeDir, defaultPort,    // 路径常量
+	templatesAbsDir, staticDir, customizeDir, defaultPort, // 路径常量
 	getAvailableTemplates, findEntryFile,				   // 模板文件操作
 	validateTemplateFile, renderTemplate,				   // 模板渲染引擎核心
 	processIncludes, setCompilationMode, getIncludedFiles, // 包含文件处理
 	processVariables,									   // 变量处理系统
-	loadUserFeatures,									   // 用户功能系统
+	loadUserFeatures, monitorFileWrites, writtenFilesToIgnore // 用户功能系统,监听写入文件,热重载忽略文件
 };

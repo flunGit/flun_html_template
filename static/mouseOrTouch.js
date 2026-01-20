@@ -7,8 +7,7 @@ const devViewSize = `${window.innerWidth}x${window.innerHeight}`; // 使用设�
  * @returns {void}
  */
 function getStyle(element, api = null) {
-    fetch(api)
-        .then(res => res.ok ? res.json() : Promise.reject(`Network error:${element}`))
+    fetch(api).then(res => res.ok ? res.json() : Promise.reject(`Network error:${element}`))
         .then(position => Object.assign(element.style, position[devViewSize]?.style ?? {}))
         .catch(error => console.error(`获取${devViewSize}的储存数据失败:`, error));
 }
@@ -29,7 +28,7 @@ function mouseOrTouch(element, onClick, api = null, isEndShow = false) {
             e.preventDefault(), e.stopPropagation();
             return;
         }
-        onClick();
+        if (onClick) onClick();
     };
 
     // 元素事件

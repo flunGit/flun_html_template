@@ -31,7 +31,7 @@ const {
 	getAvailableTemplates, validateTemplateFile, renderTemplate, processIncludes, processVariables, setCompilationMode,
 	getIncludedFiles, loadUserFeatures, findEntryFile, staticDir, customizeDir, defaultPort
 } = require('./services/templateService');
-const outPutDir = 'dist'; // 打包输出目录
+const outPutDir = 'dist', CWD = process.cwd(); // 打包输出目录
 let cachedPages = [];	  // 缓存模板列表
 
 // ==================== 1.递归目录复制工具 ====================
@@ -68,7 +68,7 @@ async function copyDir(src, destDir) {
  */
 async function checkUserRoutesExist() {
 	try {
-		const featuresDir = path.join(process.cwd(), customizeDir);
+		const featuresDir = path.join(CWD, customizeDir);
 		await fsPromises.access(featuresDir);
 
 		const files = await fsPromises.readdir(featuresDir);
@@ -258,7 +258,7 @@ async function compile(cachedPages) {
 			if (includedFiles.has(templateFile)) continue;// 跳过被包含的文件
 
 			// 输出文件
-			const outputPath = path.join(process.cwd(), path.join(outPutDir, templateFile));
+			const outputPath = path.join(CWD, path.join(outPutDir, templateFile));
 			await fsPromises.mkdir(path.dirname(outputPath), { recursive: true });
 			await fsPromises.writeFile(outputPath, rendered);
 			console.log(`✅ ${templateFile} ->已编译: ${path.join(outPutDir, templateFile)}`);

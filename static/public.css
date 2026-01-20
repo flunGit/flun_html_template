@@ -40,6 +40,16 @@ body {
 	flex-direction: column;
 	/* 背景和文字颜色切换过渡效果 */
 	transition: background 0.5s ease, color 0.5s ease;
+	/* ===优化刷新时页面抖动问题=== */
+	visibility: hidden;
+	opacity: 0;
+}
+
+/* 页面准备好时显示内容 */
+body.page-ready {
+	visibility: visible;
+	opacity: 1;
+	transition: opacity 0.1s;
 }
 
 /* Vue.js属性选择器 - 防止渲染阻塞 */

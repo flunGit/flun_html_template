@@ -8,14 +8,14 @@ module.exports = {
 	setupRoutes: function (app) {
 		// ============ 元素样式API路由 ============
 		// 获取数据文件路径, 读取数据, 定义操作元素(返回顶部图标和切换主题图标)
-		const dataFilePath = path.join(__dirname, 'data.json'),
-			data = JSON.parse(fs.readFileSync(dataFilePath, 'utf8')), elements = ['topImg', 'themeImg'];
+		const positionFile = path.join(process.cwd(), 'static', 'position.json'),
+			positionData = JSON.parse(fs.readFileSync(positionFile, 'utf8')), elements = ['topImg', 'themeImg'];
 
 		// 获取元素储存数据
 		function getElementStyle(elementKey) {
 			return (req, res) => {
 				try {
-					res.json(data[elementKey]);
+					res.json(positionData[elementKey]);
 				} catch (error) {
 					console.error(`读取${elementKey}储存样式数据失败:`, error);
 				}
@@ -27,8 +27,8 @@ module.exports = {
 			return (req, res) => {
 				try {
 					const devViewSize = Object.keys(req.body)[0];	 // 请求中的第一个键名是设备视口尺寸
-					data[elementKey][devViewSize] = req.body[devViewSize];
-					fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2));
+					positionData[elementKey][devViewSize] = req.body[devViewSize];
+					fs.writeFileSync(positionFile, JSON.stringify(positionData, null, 2));
 					res.json({ success: true, message: `${elementKey}储存样式数据已更新`, deviceId: devViewSize });
 				} catch (error) {
 					console.error(`更新${elementKey}储存样式数据失败:`, error);

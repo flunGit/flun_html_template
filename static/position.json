@@ -15,6 +15,14 @@
         "right": "auto",
         "bottom": "auto"
       }
+    },
+    "1492x868": {
+      "style": {
+        "left": "1381px",
+        "top": "775px",
+        "right": "auto",
+        "bottom": "auto"
+      }
     }
   },
   "themeImg": {
@@ -30,6 +38,22 @@
       "style": {
         "left": "14.4px",
         "top": "9.18329px",
+        "right": "auto",
+        "bottom": "auto"
+      }
+    },
+    "1492x868": {
+      "style": {
+        "left": "26px",
+        "top": "34px",
+        "right": "auto",
+        "bottom": "auto"
+      }
+    },
+    "1489x408": {
+      "style": {
+        "left": "144px",
+        "top": "27px",
         "right": "auto",
         "bottom": "auto"
       }

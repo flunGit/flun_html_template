@@ -21,12 +21,11 @@ const socketIo = require('socket.io');
 const chokidar = require('chokidar');
 const {
 	getAvailableTemplates, findEntryFile, validateTemplateFile, renderTemplate, processIncludes, processVariables,
-	loadUserFeatures, templatesAbsDir, staticDir, customizeDir, defaultPort
+	loadUserFeatures, writtenFilesToIgnore, templatesAbsDir, staticDir, customizeDir, defaultPort, monitorFileWrites
 } = require('./services/templateService');
 
-const app = express(), staticAbsDir = path.join(process.cwd(), staticDir),
-	customizeAbsDir = path.join(process.cwd(), customizeDir);
-let server, io, watcher, cachedPages = [];// 缓存模板列表
+const app = express(), CWD = process.cwd(), staticAbsDir = path.join(CWD, staticDir), customizeAbsDir = path.join(CWD, customizeDir);
+let server, io, watcher, cachedPages = [], unmountMonitor = null;
 
 // ==================== 工具函数 ====================
 /**
@@ -46,6 +45,7 @@ function createServerWithSocket(app, config) {
 function cleanupResources() {
 	if (watcher) watcher.close(), watcher = null;
 	if (io) io.close(), io = null;
+	if (unmountMonitor) unmountMonitor(); unmountMonitor = null;
 }
 
 /**
@@ -119,7 +119,8 @@ app.use((req, res, next) => {
 	res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Range');
 	res.setHeader('Access-Control-Max-Age', '86400'); // 预检请求缓存24小时
 	res.setHeader('X-Content-Type-Options', 'nosniff');
-	res.setHeader('X-Frame-Options', 'DENY');
+	res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+	res.setHeader('Content-Security-Policy', "frame-ancestors 'self'");
 	// res.setHeader('Access-Control-Allow-Credentials', 'true');// 是否启用凭据（cookies、认证等）
 
 	// 处理预检请求（OPTIONS）
@@ -162,15 +163,14 @@ function printAvailablePages(pages, port, hotReload) {
  */
 const startServer = async (port, hotReload) => {
 	try {
-		// 使用统一配置解析
 		const config = parseServerConfig({ port, hotReload });
 
 		await loadUserFeatures(app, false), cachedPages = await getAvailableTemplates();
 		for (const page of cachedPages) await validateTemplateFile(page, true);
 
-		if (config.hotReload) setupHotReload(); // 设置热重载
+		if (config.hotReload) setupHotReload();
 		printAvailablePages(cachedPages, config.port, config.hotReload);
-		createServerWithSocket(app, config);   // 创建服务器和WebSocket
+		createServerWithSocket(app, config);
 
 		server.listen(config.port, () => {
 			console.log(`服务器运行中，按 Ctrl+C 退出`), console.log('-----------------------------------');
@@ -225,17 +225,17 @@ app.use(async (req, res, next) => {
 function injectHotReloadScript(html) {
 	if (/hot-reload-socket|socket\.io\.js/.test(html)) return html; // 避免重复注入
 	const socketScript = `
-    	<script src="/socket.io/socket.io.js"></script>
-    	<script>
-    	  (function() {
-    	    var socket = io();
-    	    // 监听热重载事件
-    	    socket.on('hot-reload', (delay) => {
-    	      console.log('[热重载] 检测到文件更改,' + delay + '毫秒后重新加载页面...');
-    	      setTimeout(() => window.location.reload(), delay);
-    	    });
-    	  })();
-    	</script>
+        <script src="/socket.io/socket.io.js"></script>
+        <script>
+          (function() {
+            var socket = io();
+            // 监听热重载事件
+            socket.on('hot-reload', (delay) => {
+              console.log('[热重载] 检测到文件更改,' + delay + '毫秒后重新加载页面...');
+              setTimeout(() => window.location.reload(), delay);
+            });
+          })();
+        </script>
    `;
 
 	if (html.includes('</body>')) return html.replace('</body>', `${socketScript}</body>`);
@@ -250,23 +250,26 @@ function setupHotReload() {
 	const watchDirs = [templatesAbsDir, staticAbsDir, customizeAbsDir].filter(dir => fsSync.existsSync(dir));
 	if (watchDirs.length === 0) return console.warn('[热重载] 没有可监听的目录');
 
+	unmountMonitor = monitorFileWrites(); // 启用持续文件写入监控并获取卸载函数
 	// 文件变更事件处理函数
 	const handleFileEvent = (event, filePath) => {
-		const isBackendFile = filePath.startsWith(customizeAbsDir);
-		console.log(`检测到${event}了${path.relative(process.cwd(), filePath)}文件
-			\n热重载->${isBackendFile ? '后端文件变化重启更新中...' : '前端文件变化已刷新页面'}`);
+		const normalizedPath = path.normalize(filePath);
+		if (writtenFilesToIgnore.has(normalizedPath)) return; // 忽略文件
 
-		// 判断是前端文件还是后端文件
+		const isBackendFile = filePath.startsWith(customizeAbsDir);
 		if (isBackendFile) {
-			io.emit('hot-reload', 3500);   			// 通知浏览器延迟刷新
+			console.log(`检测到${event}了${normalizedPath}后端文件,[热重载] 执行服务器重启并刷新页面...`);
+			io.emit('hot-reload', 3500);            // 通知浏览器延迟刷新
 			setTimeout(() => restartServer(), 500); // 延迟后重启服务器
 		}
 		else {
-			// 如果删除了HTML模板文件,从缓存中移除
+			console.log(`检测到${event}了${normalizedPath}前端文件,[热重载] 已刷新页面...`);
+			// 如果删除了HTML模板文件，从缓存中移除
 			if (event === '删除' && filePath.startsWith(templatesAbsDir) && filePath.endsWith('.html')) {
 				const templateName = path.relative(templatesAbsDir, filePath).replace(/\\/g, '/');
 				cachedPages = cachedPages.filter(page => page !== templateName);
 			}
+
 			io.emit('hot-reload', 100);   // 通知浏览器刷新
 		}
 	};
@@ -288,7 +291,7 @@ function setupHotReload() {
 async function restartServer() {
 	try {
 		const port = server.address().port; // 保存当前端口
-		cleanupResources(); 			    // 关闭现有资源
+		cleanupResources();                 // 关闭现有资源
 
 		if (server) {
 			server.close(async () => {
