@@ -231,19 +231,18 @@ async function processIncludes(content, currentFile = '', inclusionStack = new S
 }
 
 // ==================== 4. 用户自定义功能系统 ====================
-const userFeatures = {};
-let writtenFilesToIgnore = new Set();
+const userFeatures = {}, writtenFilesToIgnore = [];
 
 /**
  * 运行时监控所有文件写入操作
  */
 function monitorFileWrites() {
 	const sync = fs.writeFileSync, async = fs.writeFile, promise = fsPromises.writeFile, normalize = path.normalize,
-
 		// 内联逻辑
 		track = path => {
-			if (typeof path === 'string') writtenFilesToIgnore.add(normalize(pRes(CWD, path)));
+			if (typeof path === 'string') writtenFilesToIgnore.push(normalize(pRes(CWD, path)));
 		};
+	setInterval(() => writtenFilesToIgnore.length > 0 && writtenFilesToIgnore.shift(), 1500);
 
 	fs.writeFileSync = function (file, ...args) {
 		const r = sync.call(this, file, ...args);
@@ -296,8 +295,6 @@ async function loadUserFeatures(app = null, isCompileMode = false) {
 	}
 
 	userFeatures.variables = {}, userFeatures.functions = {};
-	writtenFilesToIgnore.clear(); // 清除之前的记录
-
 	try {
 		const files = await fsPromises.readdir(featuresDir), jsFiles = files.filter(file => file.endsWith('.js'));
 		console.log(`🔧 正在加载 (${jsFiles.length}个用户自定义功能文件):`);

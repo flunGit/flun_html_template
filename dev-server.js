@@ -31,9 +31,9 @@ let server, io, watcher, cachedPages = [], unmountMonitor = null;
 /**
  * 创建带WebSocket的服务器
  */
-function createServerWithSocket(app, config) {
+function createServerWithSocket(app, hotReload) {
 	server = http.createServer(app);
-	if (config.hotReload) {
+	if (hotReload) {
 		io = socketIo(server);
 		io.engine.on("headers", headers => headers["Content-Type"] = "text/html; charset=utf-8");
 	}
@@ -163,20 +163,19 @@ function printAvailablePages(pages, port, hotReload) {
  */
 const startServer = async (port, hotReload) => {
 	try {
-		const config = parseServerConfig({ port, hotReload });
+		const config = parseServerConfig({ port, hotReload }), { port: p, hotReload: h } = config;
 
-		await loadUserFeatures(app, false), cachedPages = await getAvailableTemplates();
+		await loadUserFeatures(app), cachedPages = await getAvailableTemplates();
 		for (const page of cachedPages) await validateTemplateFile(page, true);
 
-		if (config.hotReload) setupHotReload();
-		printAvailablePages(cachedPages, config.port, config.hotReload);
-		createServerWithSocket(app, config);
+		if (h) setupHotReload();
+		printAvailablePages(cachedPages, p, h), createServerWithSocket(app, h);
 
-		server.listen(config.port, () => {
+		server.listen(port, () => {
 			console.log(`服务器运行中，按 Ctrl+C 退出`), console.log('-----------------------------------');
 		});
 
-		return config.port;
+		return p;
 	} catch (error) {
 		console.error('服务器启动失败:', error.message), process.exit(1);
 	}
@@ -229,7 +228,6 @@ function injectHotReloadScript(html) {
         <script>
           (function() {
             var socket = io();
-            // 监听热重载事件
             socket.on('hot-reload', (delay) => {
               console.log('[热重载] 检测到文件更改,' + delay + '毫秒后重新加载页面...');
               setTimeout(() => window.location.reload(), delay);
@@ -254,7 +252,7 @@ function setupHotReload() {
 	// 文件变更事件处理函数
 	const handleFileEvent = (event, filePath) => {
 		const normalizedPath = path.normalize(filePath);
-		if (writtenFilesToIgnore.has(normalizedPath)) return; // 忽略文件
+		if (writtenFilesToIgnore.includes(normalizedPath)) return; // 忽略文件
 
 		const isBackendFile = filePath.startsWith(customizeAbsDir);
 		if (isBackendFile) {
@@ -290,30 +288,18 @@ function setupHotReload() {
  */
 async function restartServer() {
 	try {
-		const port = server.address().port; // 保存当前端口
-		cleanupResources();                 // 关闭现有资源
+		const port = server.address().port;
 
-		if (server) {
-			server.close(async () => {
-				try {
-					// 清除自定义模块的缓存
-					Object.keys(require.cache).forEach(key => {
-						if (key.includes(customizeDir)) delete require.cache[key];
-					});
-
-					// 重新加载用户功能模块和获取模板列表
-					await loadUserFeatures(app, true), cachedPages = await getAvailableTemplates();
-
-					// 重新启动服务器
-					const config = { port, hotReload: true };
-					createServerWithSocket(app, config);
-
-					server.listen(config.port, () => setupHotReload()); // 重新设置热重载
-				} catch (error) {
-					console.error('[热重载] 服务器重启失败:', error);
-				}
+		cleanupResources();
+		server.close(async () => {
+			// 清除自定义模块的缓存
+			Object.keys(require.cache).forEach(key => {
+				if (key.includes(customizeDir)) delete require.cache[key];
 			});
-		}
+
+			await loadUserFeatures(app), cachedPages = await getAvailableTemplates(), createServerWithSocket(app, true);
+			server.listen(port, () => setupHotReload());
+		});
 	} catch (error) {
 		console.error('[热重载] 重启过程中发生错误:', error);
 	}
