@@ -35,7 +35,7 @@
 	"author": "flun <cn@flun.top>",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/flunGit/flun-html-template.git"
+		"url": "https://github.com/flunGit/flun_html_template"
 	},
 	"homepage": "https://www.npmjs.com/package/flun-html-template#readme",
 	"bugs": {
