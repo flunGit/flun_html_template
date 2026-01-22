@@ -39,7 +39,7 @@
 	},
 	"homepage": "https://www.npmjs.com/package/flun-html-template#readme",
 	"bugs": {
-		"url": "https://github.com/flunGit/flun-html-template/issues"
+		"url": "https://github.com/flunGit/flun_html_template/issues"
 	},
 	"license": "ISC",
 	"type": "commonjs",
