@@ -63,6 +63,7 @@ npm i -g flun-html-template # 简写
 # flun其它npm家族安装包:
 npm i flun-env   # .env 文件的环境变量调用
 npm i flun-mail  # 邮件发送
+npm i flun-windows # Window服务安装和管理
 ```
 > **重要提示**：初次使用最好在空项目中执行安装，安装过程会自动安装示例和必要文件到根目录
 
