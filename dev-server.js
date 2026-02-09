@@ -13,18 +13,14 @@
  */
 
 // ==================== 1.依赖导入与服务器初始化 ====================
-const express = require('express');
-const fsSync = require('fs');
-const path = require('path');
-const http = require('http');
-const socketIo = require('socket.io');
-const chokidar = require('chokidar');
-const {
-	getAvailableTemplates, findEntryFile, validateTemplateFile, renderTemplate, processIncludes, processVariables,
-	loadUserFeatures, writtenFilesToIgnore, templatesAbsDir, staticDir, customizeDir, defaultPort, monitorFileWrites
-} = require('./services/templateService');
+const express = require('express'), fsSync = require('fs'), http = require('http'),
+	socketIo = require('socket.io'), chokidar = require('chokidar'),
+	{
+		path, getAvailableTemplates, findEntryFile, validateTemplateFile, renderTemplate, processIncludes, processVariables,
+		loadUserFeatures, writtenFilesToIgnore, templatesAbsDir, staticDir, customizeDir, defaultPort, monitorFileWrites
+	} = require('./services/templateService'),
 
-const app = express(), CWD = process.cwd(), staticAbsDir = path.join(CWD, staticDir), customizeAbsDir = path.join(CWD, customizeDir);
+	app = express(), CWD = process.cwd(), staticAbsDir = path.join(CWD, staticDir), customizeAbsDir = path.join(CWD, customizeDir);
 let server, io, watcher, cachedPages = [], unmountMonitor = null;
 
 // ==================== 工具函数 ====================
@@ -306,10 +302,5 @@ async function restartServer() {
 }
 
 // ==================== 7.导出接口与启动执行 ====================
-module.exports = {
-	startServer, closeServer: () => {
-		cleanupResources();
-		if (server) server.close();
-	}
-};
+module.exports = { startServer };
 if (require.main === module) startServer().catch(error => (console.error('服务器启动失败:', error), process.exit(1)));

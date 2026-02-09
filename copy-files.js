@@ -1,10 +1,9 @@
 #!/usr/bin/env node
-const fs = require('fs').promises;
-const path = require('path');
+const fs = require('fs').promises, path = require('path'),
 
-// 常量定义(直接覆盖文件列表和复制列表)
-const alwaysOverwriteFiles = ['README.md', 'CHANGELOG.md'],
-    filesToCopy = ['templates', 'customize', 'static', 'dev.js', 'build.js', 'restoreDefaults.js', 'README.md', 'CHANGELOG.md'];
+    // 常量定义(直接覆盖文件列表和复制列表)
+    alwaysOverwriteFiles = ['f-README.md', 'f-CHANGELOG.md'],
+    filesToCopy = ['templates', 'customize', 'static', 'dev.js', 'build.js', 'restoreDefaults.js', 'f-README.md', 'f-CHANGELOG.md'];
 
 // 日志函数
 function log(message, config, isErrorLog = false) {
@@ -25,7 +24,7 @@ function showHelp() {
           --skip-dirs          （默认）
 
         可选参数:
-          --verbose            详细模式，显示操作信息
+          --verbose            详细模式,显示操作信息
           --help               显示此帮助信息
     `);
     process.exit(0);
@@ -35,7 +34,7 @@ function showHelp() {
 function shouldSkipFile(destExists, isRootItem, config, shouldAlwaysOverwrite) {
     if (!destExists || shouldAlwaysOverwrite) return false;
     else if (config.mode === 'skip-files') return true;
-    else if ((config.mode === 'skip-dirs' || config.mode === 'default') && isRootItem) return true;
+    else if (config.mode === 'skip-dirs' && isRootItem) return true;
     return false;
 }
 
@@ -85,13 +84,13 @@ async function copyDirectory(src, dest, isRootItem = true, config) {
     const destExists = await pathExists(dest); // 检查目标目录是否存在
 
     // 处理已存在目录
-    if (destExists && (config.mode === 'skip-dirs' || config.mode === 'default')) {
+    if (destExists && (config.mode === 'skip-dirs')) {
         log(`跳过已存在目录: ${path.basename(dest)}`, config);
         return;
     }
 
     await ensureDirectoryExists(dest, config); // 创建目标目录
-    const items = await fs.readdir(src); // 读取源目录内容
+    const items = await fs.readdir(src);       // 读取源目录内容
     log(`复制目录: ${src} -> ${dest} (${items.length} 个项目)`, config);
 
     // 并行复制所有项目
@@ -130,7 +129,7 @@ async function copyFile(src, dest, isRootItem = true, config) {
 
 // 主函数
 async function runCopyFiles(options = {}) {
-    const config = { mode: options.mode || 'default', verbose: options.verbose ?? false },
+    const config = { mode: options.mode || 'skip-dirs', verbose: options.verbose ?? false },
         packageDir = __dirname, targetDir = path.resolve(packageDir, '../..'); // 获取目录路径
 
     console.log('✅ 开始复制文件'); // 关键消息总是显示
@@ -166,7 +165,7 @@ if (require.main === module) {
     if (process.argv.includes('--overwrite')) mode = 'overwrite';
     else if (process.argv.includes('--skip-files')) mode = 'skip-files';
     else if (process.argv.includes('--skip-dirs')) mode = 'skip-dirs';
-    else mode = 'default';
+    else mode = 'skip-dirs';
 
     runCopyFiles({ mode, verbose: process.argv.includes('--verbose') })
         .catch(error => (console.log(`❌ 未处理的错误: ${error.message}`), process.exit(1)));

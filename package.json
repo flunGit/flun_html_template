@@ -22,8 +22,8 @@
 		"index.js",
 		"index.d.ts",
 		"copy-files.js",
-		"README.md",
-		"CHANGELOG.md",
+		"f-README.md",
+		"f-CHANGELOG.md",
 		"LICENSE"
 	],
 	"keywords": [

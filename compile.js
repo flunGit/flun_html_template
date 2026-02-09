@@ -24,14 +24,12 @@
  * - 语义化版本控制：自动获取Express版本号
  */
 // 1
-const fs = require('fs');
-const fsPromises = fs.promises;
-const path = require('path');
 const {
+	path, fsPromises,
 	getAvailableTemplates, validateTemplateFile, renderTemplate, processIncludes, processVariables, setCompilationMode,
 	getIncludedFiles, loadUserFeatures, findEntryFile, staticDir, customizeDir, defaultPort
-} = require('./services/templateService');
-const outPutDir = 'dist', CWD = process.cwd(); // 打包输出目录
+} = require('./services/templateService'), outPutDir = 'dist', CWD = process.cwd(); // 打包输出目录
+
 let cachedPages = [];	  // 缓存模板列表
 
 // ==================== 1.递归目录复制工具 ====================

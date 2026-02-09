@@ -12,13 +12,10 @@
  *   8. 模板渲染引擎核心：模板合成,文件验证,渲染
  *   9. 模块功能导出
  */
-const fs = require('fs');
-const path = require('path');
-const fsPromises = fs.promises;
-const vm = require('vm');
-// ==================== 1. 常量声明及工具函数====================
-// 统一所有路径常量，其他文件从此导入
-const CWD = process.cwd(), pRes = path.resolve, templatesAbsDir = path.join(CWD, 'templates'),
+const fs = require('fs'), path = require('path'), vm = require('vm'), fsPromises = fs.promises,
+	// ==================== 1. 常量声明及工具函数====================
+	// 统一所有路径常量，其他文件从此导入
+	CWD = process.cwd(), pRes = path.resolve, templatesAbsDir = path.join(CWD, 'templates'),
 	staticDir = 'static', customizeDir = 'customize', defaultPort = 7296,
 	// 预编译所有高频正则表达式
 	includeRegex = /(\"|')\[include\s+([^\]]+)\](\"|')|\[include\s+([\S\s]+?)\]/gi, quotedVarRegex = /`\s*{{(.*?)}}\s*`/g,
@@ -903,6 +900,7 @@ async function renderTemplate(templateFile) {
 
 // ==================== 9. 模块功能导出 ====================
 module.exports = {
+	path, fsPromises,
 	templatesAbsDir, staticDir, customizeDir, defaultPort, // 路径常量
 	getAvailableTemplates, findEntryFile,				   // 模板文件操作
 	validateTemplateFile, renderTemplate,				   // 模板渲染引擎核心
