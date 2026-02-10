@@ -39,25 +39,20 @@ declare module 'flun-html-template' {
      *
      * @example
      * ```javascript
-     * // 方式1: 使用默认端口和热重载
      * const { startDevServer } = require('flun-html-template');
-     * startDevServer().then(port => {
-     *   console.log(`开发服务器已在端口 ${port} 上启动`);
-     * });
+     * // 方式1: 使用默认端口和热重载
+     *      startDevServer();
      *
      * // 方式2: 指定端口并禁用热重载
-     * startDevServer(8080, false).then(port => {
-     *   console.log(`开发服务器已在端口 ${port} 上启动（热重载已禁用）`);
-     * });
+     *      startDevServer(8080, false)
      *
      * // 方式3: 使用async/await
      * (async () => {
      *   try {
-     *     const port = await startDevServer(3000);
-     *     console.log(`服务器启动成功，访问 http://localhost:${port}`);
-     *   } catch (error) {
-     *     console.error('服务器启动失败:', error);
-     *   }
+     *           await startDevServer(3000);
+     *      } catch (error) {
+     *           console.error('服务器启动失败:', error);
+     *      }
      * })();
      * ```
      */
@@ -126,12 +121,6 @@ declare module 'flun-html-template' {
      *   }
      * }
      *
-     * // 示例5: 初始化后启动开发服务器
-     * async function initializeAndStart() {
-     *   await initProject({ verbose: true });
-     *   const port = await startDevServer();
-     *   console.log(`项目已初始化并在端口 ${port} 上运行`);
-     * }
      * ```
      */
     export function initProject(options?: InitProjectOptions): Promise<void>;
@@ -159,29 +148,7 @@ declare module 'flun-html-template' {
      *   // 这里可以添加其他构建步骤
      * }
      *
-     * // 示例3: 编译后启动服务器（生产环境）
-     * async function buildAndServe() {
-     *   try {
-     *     await compile();
-     *     console.log('编译成功，启动生产服务器...');
-     *     // 这里可以添加启动生产服务器的代码
-     *   } catch (error) {
-     *     console.error('编译失败:', error);
-     *   }
-     * }
-     *
-     * // 示例4: 结合initProject使用，初始化后立即编译
-     * async function initializeAndCompile() {
-     *   const { initProject, compile } = require('flun-html-template');
-     *
-     *   await initProject({ mode: 'overwrite' });
-     *   console.log('项目文件恢复完成，开始编译...');
-     *
-     *   await compile();
-     *   console.log('编译完成！');
-     * }
-     *
-     * // 示例5: 错误处理
+     * // 示例3: 错误处理
      * compile().catch(error => {
      *   console.error('编译过程中发生错误:');
      *   console.error('错误信息:', error.message);
@@ -197,29 +164,6 @@ declare module 'flun-html-template' {
      * 项目初始化选项
      *
      * 此选项接口与命令行参数一一对应，用于编程方式调用时控制文件复制行为
-     *
-     * @example
-     * ```javascript
-     * // 示例: InitProjectOptions 的典型用法
-     * const options = {
-     *   mode: 'overwrite',  // 覆盖模式
-     *   verbose: true       // 显示详细信息
-     * };
-     *
-     * // 示例: 根据环境选择不同的初始化模式
-     * function getInitOptions() {
-     *   if (process.env.NODE_ENV === 'development') {
-     *     return { mode: 'skip-dirs', verbose: true };
-     *   } else if (process.env.NODE_ENV === 'production') {
-     *     return { mode: 'overwrite', verbose: false };
-     *   }
-     *   return {}; // 使用默认值
-     * }
-     *
-     * // 使用动态选项
-     * const initOptions = getInitOptions();
-     * initProject(initOptions);
-     * ```
      */
     export interface InitProjectOptions {
         /**
