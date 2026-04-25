@@ -1,5 +1,11 @@
 #!/usr/bin/env node
-const fs = require('fs').promises, path = require('path'),
+
+import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath, pathToFileURL } from 'url';
+
+// 获取 __dirname (仅用于迁移)
+const __filename = fileURLToPath(import.meta.url), __dirname = path.dirname(__filename),
     // 常量定义(直接覆盖文件列表和复制列表)
     alwaysOverwriteFiles = ['f-README.md', 'f-CHANGELOG.md'], filesToCopy = ['templates', 'customize', 'static', '.env',
         'dev.js', 'build.js', 'restoreDefaults.js', 'f-README.md', 'f-CHANGELOG.md'],
@@ -164,10 +170,10 @@ const runCopyFiles = async (options = {}) => {
     }
 };
 
+export { runCopyFiles };
 // 如果通过命令行调用
-if (require.main === module) {
-    // 处理命令行参数
-    if (process.argv.includes('--help')) showHelp();
+if (process.argv[1] === __filename) {
+    if (process.argv.includes('--help')) showHelp();  // 处理命令行参数
 
     // 确定模式
     let mode;
@@ -183,6 +189,4 @@ if (require.main === module) {
 
     runCopyFiles({ mode, verbose: process.argv.includes('--verbose'), account })
         .catch(error => (console.log(`❌ 未处理的错误: ${error.message}`), process.exit(1)));
-};
-
-module.exports = { runCopyFiles };
+}
