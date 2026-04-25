@@ -33,125 +33,118 @@ import { exec } from 'child_process';
 import { fileURLToPath } from 'url';
 
 let cachedPages = []; // 缓存模板列表
-const execPromise = util.promisify(exec);
+const execPromise = util.promisify(exec),
 
-// ==================== 1.递归目录复制工具 ====================
-/**
- * 目录结构克隆工具（含错误抑制）
- * @param {string} src - 源目录路径
- * @param {string} destDir - 目标目录路径
- *
- * 特性：
- * - 自动创建目标目录结构
- * - 跳过不存在的源目录（不报错）
- * - 保留子目录结构递归复制
- */
-const copyDir = async (src, destDir) => {
-	try {
-		await fsPromises.mkdir(destDir, { recursive: true });
-		const entries = await fsPromises.readdir(src, { withFileTypes: true });
-		for (const entry of entries) {
-			const srcPath = path.join(src, entry.name),
-				destPath = path.join(destDir, entry.name);
-			if (entry.isDirectory()) await copyDir(srcPath, destPath);
-			else await fsPromises.copyFile(srcPath, destPath);
+	// ==================== 1.递归目录复制工具 ====================
+	/**
+	 * 目录结构克隆工具（含错误抑制）
+	 * @param {string} src - 源目录路径
+	 * @param {string} destDir - 目标目录路径
+	 *
+	 * 特性：
+	 * - 自动创建目标目录结构
+	 * - 跳过不存在的源目录（不报错）
+	 * - 保留子目录结构递归复制
+	 */
+	copyDir = async (src, destDir) => {
+		try {
+			await fsPromises.mkdir(destDir, { recursive: true });
+			const entries = await fsPromises.readdir(src, { withFileTypes: true });
+			for (const entry of entries) {
+				const srcPath = path.join(src, entry.name), destPath = path.join(destDir, entry.name);
+				if (entry.isDirectory()) await copyDir(srcPath, destPath);
+				else await fsPromises.copyFile(srcPath, destPath);
+			}
+		} catch (error) {
+			if (error.code !== 'ENOENT') console.error(`❌ 复制目录出错: ${src} -> ${destDir}`, error.message);
 		}
-	} catch (error) {
-		if (error.code !== 'ENOENT')
-			console.error(`❌ 复制目录出错: ${src} -> ${destDir}`, error.message);
-	}
-};
+	},
 
-// ==================== 2.路由文件处理及入口文件生成 ====================
+	// ==================== 2.路由文件处理及入口文件生成 ====================
 
-/**
- * 检测用户是否定义路由功能
- * @returns {Promise<boolean>} 是否存在有效路由
- */
-const checkUserRoutesExist = async () => {
-	try {
-		const featuresDir = path.join(CWD, customizeDir),
-			files = await fsPromises.readdir(featuresDir);
-		await fsPromises.access(featuresDir);
-		for (const file of files.filter(f => f.endsWith('.js'))) {
-			try {
-				const content = await fsPromises.readFile(
-					path.join(featuresDir, file),
-					'utf8'
-				);
-				if (content.includes('setupRoutes:')) return true;
-			} catch { /* skip unreadable files */ }
+	/**
+	 * 检测用户是否定义路由功能(兼容默认导出与具名导出)
+	 * @returns {Promise<boolean>} 是否存在有效路由
+	 */
+	checkUserRoutesExist = async () => {
+		try {
+			const featuresDir = path.join(CWD, customizeDir);
+			await fsPromises.access(featuresDir);
+			const files = (await fsPromises.readdir(featuresDir)).filter(f => f.endsWith('.js'));
+			for (const file of files) {
+				try {
+					const mod = await import(path.join(featuresDir, file)), feature = mod.default?.setupRoutes ? mod.default : mod;
+					if (typeof feature.setupRoutes === 'function') return true;
+				} catch { }
+			}
+			return false;
+		} catch {
+			return false;
 		}
-		return false;
-	} catch {
-		return false;
-	}
-};
+	},
 
-/**
- * 合并用户项目依赖与模板工具依赖,生成完整的 package.json 内容
- * @param {boolean} hasUserRoutes - 是否存在用户自定义路由
- * @returns {Promise<string>} 格式化后的 package.json 字符串
- */
-const mergeDependencies = async (hasUserRoutes) => {
-	let basePkg = {}, userDeps = {}, mergedDeps = {};
-	const userPkgPath = path.join(CWD, 'package.json');
-	try {
-		const userPkgRaw = await fsPromises.readFile(userPkgPath, 'utf8'), userPkg = JSON.parse(userPkgRaw);
-		basePkg.author = userPkg.author || '', basePkg.license = userPkg.license || 'ISC';
-		userDeps = userPkg.dependencies || {};
-	} catch (err) { }
+	/**
+	 * 合并用户项目依赖与模板工具依赖,生成完整的 package.json 内容
+	 * @param {boolean} hasUserRoutes - 是否存在用户自定义路由
+	 * @returns {Promise<string>} 格式化后的 package.json 字符串
+	 */
+	mergeDependencies = async hasUserRoutes => {
+		let basePkg = {}, userDeps = {}, mergedDeps = {};
+		const userPkgPath = path.join(CWD, 'package.json');
+		try {
+			const userPkgRaw = await fsPromises.readFile(userPkgPath, 'utf8'), userPkg = JSON.parse(userPkgRaw);
+			basePkg.author = userPkg.author || '', basePkg.license = userPkg.license || 'ISC';
+			userDeps = userPkg.dependencies || {};
+		} catch (err) { }
 
-	if (hasUserRoutes) {
-		const templateDeps = PK.dependencies || {}, excludeList = ['chokidar', 'socket.io', 'flun-html-template'];
-		mergedDeps = { ...templateDeps, ...userDeps };
-		for (const pkg of excludeList) delete mergedDeps[pkg];
-	}
-	if (!mergedDeps.express) mergedDeps.express = '^5.2.1';
+		if (hasUserRoutes) {
+			const templateDeps = PK.dependencies || {}, excludeList = ['chokidar', 'socket.io', 'flun-html-template'];
+			mergedDeps = { ...templateDeps, ...userDeps };
+			for (const pkg of excludeList) delete mergedDeps[pkg];
+		}
+		if (!mergedDeps.express) mergedDeps.express = '^5.2.1';
 
-	const finalPkg = {
-		name: 'dist-server', version: '1.0.0',
-		...basePkg,
-		type: 'module', main: 'server.js',
-		scripts: { dev: 'node server.js' },
-		dependencies: mergedDeps,
-		overrides: { 'fast-xml-parser': '^5.3.4' }
-	};
-	return JSON.stringify(finalPkg, null, 2);
-};
+		const finalPkg = {
+			name: 'dist-server', version: '1.0.0',
+			...basePkg,
+			type: 'module', main: 'server.js',
+			scripts: { dev: 'node server.js' },
+			dependencies: mergedDeps,
+			overrides: { 'fast-xml-parser': '^5.3.4' }
+		};
+		return JSON.stringify(finalPkg, null, 2);
+	},
 
-/**
- * 在目标目录中执行 npm install
- * @param {string} targetDir - 目标目录
- */
-const installDependencies = async (targetDir) => {
-	console.log('📦 正在安装项目依赖，请稍候...');
-	try {
-		const { stdout, stderr } = await execPromise('npm install', {
-			cwd: targetDir
-		});
-		if (stdout) console.log(stdout);
-		if (stderr) console.error(stderr);
-		console.log('✅ 依赖安装完成');
-	} catch (error) {
-		console.error('❌ 依赖安装失败:', error.message);
-		console.log('💡 请手动进入目标目录执行 npm install');
-	}
-};
+	/**
+	 * 在目标目录中执行 npm install
+	 * @param {string} targetDir - 目标目录
+	 */
+	installDependencies = async targetDir => {
+		console.log('📦 正在安装项目依赖，请稍候...');
+		try {
+			const { stdout, stderr } = await execPromise('npm install', { cwd: targetDir });
+			if (stdout) console.log(stdout);
+			if (stderr) console.error(stderr);
+			console.log('✅ 依赖安装完成');
+		} catch (error) {
+			console.error('❌ 依赖安装失败:', error.message);
+			console.log('💡 请手动进入目标目录执行 npm install');
+		}
+	},
 
-/**
- * 生成服务端入口文件内容（ESM 格式）
- * @param {boolean} hasUserRoutes - 是否存在用户自定义路由
- * @param {string} entryFile - 入口文件名（如 index.html）
- * @returns {Promise<string>} server.js 文件内容
- */
-const generateServerEntry = async (hasUserRoutes, entryFile) => {
-	const imports = `import express from 'express';
+	/**
+	 * 生成服务端入口文件内容（ESM 格式）
+	 * @param {boolean} hasUserRoutes - 是否存在用户自定义路由
+	 * @param {string} entryFile - 入口文件名（如 index.html）
+	 * @returns {Promise<string>} server.js 文件内容
+	 */
+	generateServerEntry = async (hasUserRoutes, entryFile) => {
+		const imports = `import express from 'express';
 			import path from 'path';
 			import { fileURLToPath } from 'url';
 			const __filename = fileURLToPath(import.meta.url), __dirname = path.dirname(__filename),
 			app = express(),port = process.env.PORT || ${defaultPort}`,
-		corsAndSecurity = `
+			corsAndSecurity = `
 			app.use((req, res, next) => {
 			    res.setHeader('Access-Control-Allow-Origin', '*');
 			    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD');
@@ -166,15 +159,14 @@ const generateServerEntry = async (hasUserRoutes, entryFile) => {
 			        return res.status(204).end();
 			    }
 			    next();
-			});
-			app.set('trust proxy', false);`,
-		staticMiddleware = `app.use('/static', express.static(path.join(__dirname, '${staticDir}')));
+			}),	app.set('trust proxy', false);`,
+			staticMiddleware = `app.use('/static', express.static(path.join(__dirname, '${staticDir}')));
 			app.use(express.static(path.join(__dirname, '${templatesDir}')));`,
-		defaultRootRoute = `app.get('/', (req, res) => res.redirect('/${entryFile}'));`;
+			defaultRootRoute = `app.get('/', (req, res) => res.redirect('/${entryFile}'));`;
 
-	// ----- 有用户路由时的动态加载服务器 -----
-	if (hasUserRoutes) {
-		return `
+		// ----- 有用户路由时的动态加载服务器 -----
+		if (hasUserRoutes) {
+			return `
  			import fs from 'fs';
  			${imports}, allRoutes = [];
 
@@ -188,18 +180,16 @@ const generateServerEntry = async (hasUserRoutes, entryFile) => {
  			            return originals[method](routePath, ...handlers);
  			        };
  			    });
- 			};
-
+ 			},
  			// 打印已注册路由
- 			const printRoutes = () => {
+ 			printRoutes = () => {
  			    if (allRoutes.length) {
  			        console.log('   🗺️ 注册路由:');
  			        allRoutes.forEach(r => console.log(\`      \${r.method.padEnd(6)} \${r.path}\`));
  			    } else console.log('   ℹ️ 未找到任何路由');
- 			};
-
- 			// 动态加载用户自定义路由（ESM 异步 import）
- 			const loadUserRoutes = async () => {
+ 			},
+ 			// 动态加载用户自定义路由
+ 			loadUserRoutes = async () => {
  			    const featuresDir = path.join(__dirname, '${customizeDir}');
  			    if (!fs.existsSync(featuresDir)) return console.log(\`   ℹ️ \${featuresDir}目录不存在，跳过路由加载\`);
 
@@ -224,7 +214,7 @@ const generateServerEntry = async (hasUserRoutes, entryFile) => {
  			wrapAppMethods(app);
  			${corsAndSecurity}
 
- 			// 启动流程：先加载路由，再注册静态资源与默认路由
+ 			// 启动流程：先加载路由,再注册静态资源与默认路由
  			const start = async () => {
  			    await loadUserRoutes();
  			    ${staticMiddleware}
@@ -236,10 +226,10 @@ const generateServerEntry = async (hasUserRoutes, entryFile) => {
  			    });
  			};
  		start();`.trim();
-	}
+		}
 
-	// ----- 无用户路由时的纯静态服务器 -----
-	return `
+		// ----- 无用户路由时的纯静态服务器 -----
+		return `
 		${imports};
 
 		${corsAndSecurity}
@@ -249,37 +239,37 @@ const generateServerEntry = async (hasUserRoutes, entryFile) => {
 		    console.log(\`\\n🚀 静态服务器已启动: http://localhost:\${port}\`);
 		    console.log('📁 当前仅提供静态文件服务（未检测到用户路由）');
 		});`.trim();
-};
+	},
 
-// ==================== 3.编译模板文件 ====================
-/**
- * @param {string[]} cachedPages - 所有待编译文件（相对于 templatesDir 的路径）
- * @param {string} outputDir - 输出根目录（例如 'dist'）
- *
- * 处理阶段：
- * 1. 展平编译(模板继承,包含指令解析,变量占位符替换)
- * 2. 获取所有包含文件并跳过
- * 3. 文件输出到 outputDir/templatesDir/ 下，保持原相对路径结构
- */
-const compile = async (cachedPages, outputDir) => {
-	for (const templateFile of cachedPages) {
-		try {
-			let rendered = await renderTemplate(templateFile);
-			rendered = await processIncludes(rendered, templateFile);
-			rendered = processVariables(rendered, { currentUrl: `/${templateFile}`, query: {} });
+	// ==================== 3.编译模板文件 ====================
+	/**
+	 * @param {string[]} cachedPages - 所有待编译文件（相对于 templatesDir 的路径）
+	 * @param {string} outputDir - 输出根目录（例如 'dist'）
+	 *
+	 * 处理阶段：
+	 * 1. 展平编译(模板继承,包含指令解析,变量占位符替换)
+	 * 2. 获取所有包含文件并跳过
+	 * 3. 文件输出到 outputDir/templatesDir/ 下，保持原相对路径结构
+	 */
+	compile = async (cachedPages, outputDir) => {
+		for (const templateFile of cachedPages) {
+			try {
+				let rendered = await renderTemplate(templateFile);
+				rendered = await processIncludes(rendered, templateFile);
+				rendered = processVariables(rendered, { currentUrl: `/${templateFile}`, query: {} });
 
-			const includedFiles = getIncludedFiles(); // 获取所有包含文件
-			if (includedFiles.has(templateFile)) continue; // 跳过被包含的文件
+				const includedFiles = getIncludedFiles(); // 获取所有包含文件
+				if (includedFiles.has(templateFile)) continue; // 跳过被包含的文件
 
-			const outputPath = path.join(CWD, outputDir, templatesDir, templateFile);
-			await fsPromises.mkdir(path.dirname(outputPath), { recursive: true });
-			await fsPromises.writeFile(outputPath, rendered);
-			console.log(`✅ ${templateFile} ->已编译: ${path.join(outputDir, templatesDir, templateFile)}`);
-		} catch (error) {
-			console.error(`❌ 编译 ${templateFile} 时出错: ${error.message}`);
+				const outputPath = path.join(CWD, outputDir, templatesDir, templateFile);
+				await fsPromises.mkdir(path.dirname(outputPath), { recursive: true });
+				await fsPromises.writeFile(outputPath, rendered);
+				console.log(`✅ ${templateFile} ->已编译: ${path.join(outputDir, templatesDir, templateFile)}`);
+			} catch (error) {
+				console.error(`❌ 编译 ${templateFile} 时出错: ${error.message}`);
+			}
 		}
-	}
-};
+	};
 
 // ==================== 4.批量编译主流程 ====================
 /**
@@ -307,26 +297,20 @@ const compileAllTemplates = async (options = {}) => {
 
 	try {
 		// 1.设置编译模式并清空包含文件记录
-		setCompilationMode(true);
-		cachedPages = await getAvailableTemplates();
+		setCompilationMode(true), cachedPages = await getAvailableTemplates();
 		for (const file of cachedPages) await validateTemplateFile(file); // 模板验证
 
 		// 2.加载用户自定义功能（编译模式）
-		await loadUserFeatures(null, true);
-		console.log(`ℹ️ 变量已从${customizeDir}目录加载`);
+		await loadUserFeatures(null, true), console.log(`ℹ️ 变量已从${customizeDir}目录加载`);
 
 		// 3.创建打包目录
 		await fsPromises.rm(outputDir, { recursive: true, force: true });
-		await fsPromises.mkdir(outputDir, { recursive: true });
-		console.log(`📁 已创建输出目录: ${outputDir}`);
-		await compile(cachedPages, outputDir);
-		console.log(`\n🎉 编译文件完成!`);
+		await fsPromises.mkdir(outputDir, { recursive: true }), console.log(`📁 已创建输出目录: ${outputDir}`);
+		await compile(cachedPages, outputDir), console.log(`\n🎉 编译文件完成!`);
 
 		// 4. 检测是否存在用户路由,生成package.json内容,获取入口文件生成 server.js 内容，并原子写入磁盘
-		const hasUserRoutes = await checkUserRoutesExist(),
-			pkgContent = await mergeDependencies(hasUserRoutes),
-			entryFile = await findEntryFile(cachedPages),
-			serverContent = await generateServerEntry(hasUserRoutes, entryFile);
+		const hasUserRoutes = await checkUserRoutesExist(), pkgContent = await mergeDependencies(hasUserRoutes),
+			entryFile = await findEntryFile(cachedPages), serverContent = await generateServerEntry(hasUserRoutes, entryFile);
 
 		await Promise.all([
 			fsPromises.writeFile(path.join(outputDir, 'server.js'), serverContent),
@@ -337,23 +321,16 @@ const compileAllTemplates = async (options = {}) => {
 		await copyDir(staticDir, path.join(outputDir, staticDir));
 		await copyDir(customizeDir, path.join(outputDir, customizeDir));
 		try {
-			await fsPromises.copyFile(
-				path.join(CWD, '.env'),
-				path.join(outputDir, '.env')
-			);
+			await fsPromises.copyFile(path.join(CWD, '.env'), path.join(outputDir, '.env'));
 		} catch (err) {
-			if (err.code !== 'ENOENT')
-				console.error(`⚠️ 复制 .env 文件失败: ${err.message}`);
+			if (err.code !== 'ENOENT') console.error(`⚠️ 复制 .env 文件失败: ${err.message}`);
 		}
-		console.log('✅ 资源打包完成');
-		await installDependencies(outputDir);
+		console.log('✅ 资源打包完成'), await installDependencies(outputDir);
 
-		if (hasUserRoutes)
-			console.log('\n🚀 检测到自定义路由,已创建完整服务端入口文件');
+		if (hasUserRoutes) console.log('\n🚀 检测到自定义路由,已创建完整服务端入口文件');
 		else console.log('\n📄 已生成静态文件服务器（无用户路由）');
 
-		console.log(`👉 启动服务器命令: cd ${outputDir} && node server.js`);
-		setCompilationMode(false); // 设置编译模式为假
+		console.log(`👉 启动服务器命令: cd ${outputDir} && node server.js`), setCompilationMode(false); // 设置编译模式为假
 	} catch (error) {
 		console.error('❌ 编译流程出错:', error.message);
 		setCompilationMode(false);

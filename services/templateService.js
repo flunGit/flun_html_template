@@ -265,11 +265,18 @@ const monitorFileWrites = () => {
 },
 
 	/**
-	 * 安全加载模块
-	 */
-	_safeRequire = modulePath => {
+	* 异步安全加载模块（兼容 ESM 和 CJS）
+	*/
+	_safeImport = async modulePath => {
 		try {
-			return require(modulePath);
+			const mod = await import(modulePath); const { default: dft } = mod;
+			// 统一导出：优先使用 default 导出（ESM 默认导出 / CJS module.exports）
+			// 如果 default 存在且包含 setupRoutes / functions / variables,则用 default,否则用整个模块
+			const hasDefault = dft && typeof dft === 'object';
+			if (hasDefault && (
+				typeof dft.setupRoutes === 'function' || typeof dft.functions === 'object' || typeof dft.variables === 'object'
+			)) return dft;
+			return mod;
 		} catch (error) {
 			console.error(`加载模块失败: ${modulePath}`, error.message);
 			return null;
@@ -289,8 +296,10 @@ const loadUserFeatures = async (app = null, isCompileMode = false) => {
 	try {
 		await fsPromises.access(featuresDir);
 	} catch {
-		if (isCompileMode)
-			await fsPromises.mkdir(featuresDir, { recursive: true }), console.log(`📁 已创建用户功能目录:${customizeDir}`);
+		if (isCompileMode) {
+			await fsPromises.mkdir(featuresDir, { recursive: true });
+			console.log(`📁 已创建用户功能目录: ${customizeDir}`);
+		}
 	}
 
 	userFeatures.variables = {}, userFeatures.functions = {};
@@ -299,21 +308,29 @@ const loadUserFeatures = async (app = null, isCompileMode = false) => {
 		console.log(`🔧 正在加载 (${jsFiles.length}个用户自定义功能文件):`);
 
 		for (const file of jsFiles) {
-			const featurePath = path.join(featuresDir, file), userFeature = _safeRequire(featurePath);
+			const featurePath = path.join(featuresDir, file), userFeature = await _safeImport(featurePath);
+
 			if (!userFeature) {
 				console.log(` ❌ ${file} - 加载失败`);
 				continue;
 			}
 
+			// 注册路由（仅限服务器模式且有 app 实例）
 			if (typeof userFeature.setupRoutes === 'function' && app) userFeature.setupRoutes(app);
+
+			// 收集函数
 			if (userFeature.functions && typeof userFeature.functions === 'object') {
 				Object.keys(userFeature.functions).forEach(funcName => {
 					if (typeof userFeature.functions[funcName] === 'function')
 						userFeatures.functions[`${file.replace('.js', '')}.${funcName}`] = userFeature.functions[funcName];
 				});
 			}
+
+			// 收集变量
 			if (userFeature.variables && typeof userFeature.variables === 'object')
 				Object.assign(userFeatures.variables, userFeature.variables);
+
+			console.log(` ✅ ${file} - 加载成功`);
 		}
 		console.log('✅ 所有用户功能加载完成');
 	} catch (error) {
@@ -905,9 +922,9 @@ const renderTemplate = async templateFile => {
 export {
 	path, fsPromises, CWD,
 	templatesAbsDir, templatesDir, staticDir, customizeDir, accountDir, defaultPort, // 路径常量
-	getAvailableTemplates, findEntryFile,				   // 模板文件操作
-	validateTemplateFile, renderTemplate,				   // 模板渲染引擎核心
-	processIncludes, setCompilationMode, getIncludedFiles, // 包含文件处理
-	processVariables,									   // 变量处理系统
+	getAvailableTemplates, findEntryFile,				   	  // 模板文件操作
+	validateTemplateFile, renderTemplate,				   	  // 模板渲染引擎核心
+	processIncludes, setCompilationMode, getIncludedFiles, 	  // 包含文件处理
+	processVariables,									   	  // 变量处理系统
 	loadUserFeatures, monitorFileWrites, writtenFilesToIgnore // 用户功能系统,监听写入文件,热重载忽略文件
 };
