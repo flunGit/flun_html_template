@@ -9,7 +9,7 @@ const __filename = fileURLToPath(import.meta.url), __dirname = path.dirname(__fi
 
 // 非认证路由：元素样式、CSS编辑、图片管理、自定义API等
 export default {
-	setupRoutes: (app) => {
+	setupRoutes: app => {
 		app.use(express.json(), express.urlencoded({ extended: true }));
 
 		// ============ 元素样式 API ============
@@ -47,7 +47,7 @@ export default {
 				};
 			};
 
-		elements.forEach((element) => {
+		elements.forEach(element => {
 			app.get(`/api/${element}`, getElementStyle(element));
 			app.post(`/api/${element}`, updateElementStyle(element));
 		});

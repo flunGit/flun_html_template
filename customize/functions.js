@@ -3,34 +3,34 @@
 export default {
 	functions: {
 		// 简单计算器函数
-		add: function (a, b) {
+		add: (a, b) => {
 			return a + b;
 		},
 
-		subtract: function (a, b) {
+		subtract: (a, b) => {
 			return a - b;
 		},
 
-		multiply: function (a, b) {
+		multiply: (a, b) => {
 			return a * b;
 		},
 
-		divide: function (a, b) {
+		divide: (a, b) => {
 			return b !== 0 ? a / b : '错误: 除零错误';
 		},
 
 		// 简单问候函数
-		greet: function (name) {
+		greet: (name) => {
 			return `你好, ${name}!`;
 		},
 
 		// 带时间的问候
-		greetWithTime: function (name) {
+		greetWithTime: name => {
 			return `你好, ${name}! 现在是 ${new Date().toLocaleTimeString()}`;
 		},
 
 		// 格式化日期
-		formatDate: function (date) {
+		formatDate: date => {
 			// 处理无参数调用
 			if (arguments.length === 0) {
 				return new Date().toLocaleDateString('zh-CN');
