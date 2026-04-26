@@ -141,7 +141,7 @@ const execPromise = util.promisify(exec),
 	generateServerEntry = async (hasUserRoutes, entryFile) => {
 		const imports = `import express from 'express';
 			import path from 'path';
-			import { fileURLToPath } from 'url';
+			import { fileURLToPath, pathToFileURL } from 'url';
 			const __filename = fileURLToPath(import.meta.url), __dirname = path.dirname(__filename),
 			app = express(),port = process.env.PORT || ${defaultPort}`,
 			corsAndSecurity = `
@@ -197,7 +197,9 @@ const execPromise = util.promisify(exec),
  			    for (const file of routeFiles) {
  			        try {
  			            // 使用带时间戳的查询参数避免模块缓存,确保每次获取最新内容
- 			            const modulePath = path.join(featuresDir, file), feature = await import(modulePath + '?update=' + Date.now());
+ 			            const modulePath = path.join(featuresDir, file), moduleUrl = pathToFileURL(modulePath);
+						moduleUrl.search = 'update=' + Date.now();
+						const feature = await import(moduleUrl.href);
  			            if (typeof feature.default?.setupRoutes === 'function') {
  			                feature.default.setupRoutes(app);
  			                console.log(\`   ✅ 路由加载文件: \${file}\`);

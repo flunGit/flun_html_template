@@ -15,6 +15,7 @@
 import fs from 'fs';
 import path from 'path';
 import vm from 'vm';
+import { pathToFileURL } from 'url';
 // ==================== 1. 常量声明及工具函数====================
 // 统一所有路径常量，其他文件从此导入
 const fsPromises = fs.promises, CWD = process.cwd(), templatesDir = 'templates', templatesAbsDir = path.join(CWD, templatesDir),
@@ -244,7 +245,7 @@ const monitorFileWrites = () => {
 	setInterval(() => writtenFilesToIgnore.length > 0 && writtenFilesToIgnore.shift(), 1500);
 
 	fs.writeFileSync = (file, ...args) => {
-		const r = sync.call(this, file, ...args);
+		const r = sync.call(fs, file, ...args);
 		process.nextTick(track, file);
 		return r;
 	};
@@ -269,7 +270,7 @@ const monitorFileWrites = () => {
 	*/
 	_safeImport = async modulePath => {
 		try {
-			const mod = await import(modulePath); const { default: dft } = mod;
+			const mod = await import(pathToFileURL(modulePath).href), { default: dft } = mod;
 			// 统一导出：优先使用 default 导出（ESM 默认导出 / CJS module.exports）
 			// 如果 default 存在且包含 setupRoutes / functions / variables,则用 default,否则用整个模块
 			const hasDefault = dft && typeof dft === 'object';
@@ -598,8 +599,8 @@ const loadUserFeatures = async (app = null, isCompileMode = false) => {
 	},
 
 	/**
-	 * 表达式求值函数，在安全沙箱环境中执行JavaScript表达式
-	 * 使用vm模块创建安全上下文，避免使用eval
+	 * 表达式求值函数,在安全沙箱环境中执行JavaScript表达式
+	 * 使用vm模块创建安全上下文,避免使用eval
 	 * 将沙箱环境中的变量和函数作为参数传入执行上下文
 	 * 支持完整的JavaScript表达式语法，包括:
 	 * - 算术运算: +, -, *, /, %

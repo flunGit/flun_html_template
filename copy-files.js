@@ -2,7 +2,7 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import { fileURLToPath, pathToFileURL } from 'url';
+import { fileURLToPath } from 'url';
 
 // 获取 __dirname (仅用于迁移)
 const __filename = fileURLToPath(import.meta.url), __dirname = path.dirname(__filename),

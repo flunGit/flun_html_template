@@ -9,29 +9,36 @@
  * 5. 请求页面路由处理(自动路由与模板渲染) —— 已在 startServer 内部动态添加
  * 6. 热重载功能实现(文件监听与WebSocket通信)
  * 7. 导出接口与启动执行(module.exports , startServer)
- *
  */
 
 // ==================== 1.依赖导入与服务器初始化 ====================
-const express = require('express'), { constants, existsSync } = require('fs'), http = require('http'),
-	socketIo = require('socket.io'), chokidar = require('chokidar'), { path, fsPromises, CWD, getAvailableTemplates,
-		findEntryFile, validateTemplateFile, renderTemplate, processIncludes, processVariables, loadUserFeatures,
-		writtenFilesToIgnore, templatesAbsDir, templatesDir, staticDir, customizeDir, accountDir, defaultPort,
-		monitorFileWrites } = require('./services/templateService'), app = express(), staticAbsDir = path.join(CWD, staticDir),
-	customizeAbsDir = path.join(CWD, customizeDir);
-let server, io, watcher, cachedPages = [], unmountMonitor = null;
+import express from 'express';
+import { constants, existsSync } from 'fs';
+import http from 'http';
+import socketIo from 'socket.io';
+import chokidar from 'chokidar';
+import {
+	path, fsPromises, CWD, getAvailableTemplates, findEntryFile, validateTemplateFile, renderTemplate, processIncludes,
+	processVariables, loadUserFeatures, writtenFilesToIgnore, templatesAbsDir, templatesDir, staticDir, customizeDir,
+	accountDir, defaultPort, monitorFileWrites
+} from './services/templateService.js';
+import { fileURLToPath, pathToFileURL } from 'url';
 
-// ==================== 工具函数 ====================
-/**
- * 创建带WebSocket的服务器
- */
-const createServerWithSocket = (app, hotReload) => {
-	server = http.createServer(app);
-	if (hotReload) {
-		io = socketIo(server);
-		io.engine.on("headers", headers => headers["Content-Type"] = "text/html; charset=utf-8");
-	}
-},
+let server, io, watcher, cachedPages = [], unmountMonitor = null;
+const __filename = fileURLToPath(import.meta.url), __dirname = path.dirname(__filename),
+	app = express(), staticAbsDir = path.join(CWD, staticDir), customizeAbsDir = path.join(CWD, customizeDir),
+
+	// ==================== 工具函数 ====================
+	/**
+	 * 创建带WebSocket的服务器
+	 */
+	createServerWithSocket = (app, hotReload) => {
+		server = http.createServer(app);
+		if (hotReload) {
+			io = socketIo(server);
+			io.engine.on("headers", headers => headers["Content-Type"] = "text/html; charset=utf-8");
+		}
+	},
 
 	/**
 	 * 清理资源
@@ -74,7 +81,7 @@ const createServerWithSocket = (app, hotReload) => {
 		try {
 			await fsPromises.access(userAccountJs, constants.F_OK);
 		} catch {
-			console.log('检测到 account=true 但缺少 customize/account.js，正在从包内复制...');
+			console.log('检测到 account=true 但缺少 customize/account.js,正在从包内复制...');
 			const pkgCustomizeDir = path.join(__dirname, customizeDir),
 				defaultAccountJs = path.join(pkgCustomizeDir, 'account.js');
 			try {
@@ -338,7 +345,7 @@ const startServer = async (options = {}) => {
 	},
 
 	/**
-	 * 重启服务器
+	 * 重启服务器（ESM 兼容：使用动态 import 替代 require.cache）
 	 */
 	restartServer = async () => {
 		try {
@@ -346,13 +353,15 @@ const startServer = async (options = {}) => {
 
 			cleanupResources();
 			server.close(async () => {
-				// 清除自定义模块的缓存
-				Object.keys(require.cache).forEach(key => {
-					if (key.includes(customizeDir)) delete require.cache[key];
-				});
-
-				await loadUserFeatures(app), cachedPages = await getAvailableTemplates(), createServerWithSocket(app, true);
-				server.listen(port, () => setupHotReload());
+				// 清除模块缓存：动态重新导入 customize 目录的模块,并用时间戳绕过缓存
+				const modulePath = path.join(CWD, customizeDir),
+					freshModule = await import(`${pathToFileURL(modulePath).href}?t=${Date.now()}`);
+				// 重新执行加载用户功能（如果 freshModule 导出了 loadUserFeatures 函数）
+				if (typeof freshModule.loadUserFeatures === 'function') await freshModule.loadUserFeatures(app);
+				else if (typeof freshModule === 'function') await freshModule(app);
+				else await loadUserFeatures(app);
+				cachedPages = await getAvailableTemplates();
+				createServerWithSocket(app, true), server.listen(port, () => setupHotReload());
 			});
 		} catch (error) {
 			console.error('[热重载] 重启过程中发生错误:', error);
@@ -360,5 +369,5 @@ const startServer = async (options = {}) => {
 	};
 
 // ==================== 7.导出接口与启动执行 ====================
-module.exports = { startServer };
-if (require.main === module) startServer().catch(error => (console.error('服务器启动失败:', error), process.exit(1)));
+export { startServer };
+if (process.argv[1] === __filename) startServer().catch(error => (console.error('服务器启动失败:', error), process.exit(1)));
